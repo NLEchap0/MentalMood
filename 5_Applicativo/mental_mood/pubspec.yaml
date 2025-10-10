@@ -64,10 +64,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/uncertain.png
-    - assets/images/angry.png
-    - assets/images/sad.png
-    - assets/images/happy.png
+    - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -1,10 +1,8 @@
 import 'dart:io';
 import 'package:drift/drift.dart';
-import 'package:drift/extensions/native.dart';
 import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-
 part 'database.g.dart';
 
 class Emozione extends Table{ //the emotion table of the database
@@ -77,52 +75,6 @@ class AppDataBase extends _$AppDataBase{
           // codice per migrare dalla versione 1 alla 2
         }
       },
-      beforeOpen: (details) async {
-        // Questa logica viene eseguita ogni volta che l'app apre il database.
-
-        // Usiamo un batch per inserire tutte le emozioni di default.
-        // La modalità `insertOrIgnore` garantisce che se un'emozione
-        // con lo stesso nome (chiave primaria) esiste già, l'operazione
-        // di inserimento per quella riga viene semplicemente ignorata,
-        // senza causare errori o duplicati.
-        await batch((batch) {
-          batch.insertAll(
-            emozione, // Specifica la tabella
-            [
-              // La tua lista di emozioni di default
-              EmozioneCompanion.insert(
-                nome: 'Felicità',
-                imgPath: 'assets/images/felicita.png',
-                valore: 5,
-              ),
-              EmozioneCompanion.insert(
-                nome: 'Tristezza',
-                imgPath: 'assets/images/tristezza.png',
-                valore: 1,
-              ),
-              EmozioneCompanion.insert(
-                nome: 'Rabbia',
-                imgPath: 'assets/images/rabbia.png',
-                valore: 2,
-              ),
-              // --- Esempio per il futuro ---
-              // Se un giorno aggiungi "Ansia", ti basterà aggiungerla qui.
-              // Al successivo avvio dell'app, verrà aggiunta per tutti gli utenti
-              // che non ce l'hanno, mentre verrà ignorata per chi ce l'ha già.
-              /*
-              EmozioneCompanion.insert(
-                nome: 'Ansia',
-                imgPath: 'assets/images/ansia.png',
-                valore: 2,
-              ),
-              */
-            ],
-            // QUESTA È LA PARTE CHIAVE DELLA SOLUZIONE:
-            mode: InsertMode.insertOrIgnore,
-          );
-        });
-      },
-
     );
   }
 

@@ -1,41 +1,91 @@
+import 'package:flutter/cupertino.dart' hide Column;
 import 'package:flutter/material.dart';
-import 'package:mental_mood/DataBase/database.dart';
-import 'package:mental_mood/Pages/home_page.dart';
 import 'package:provider/provider.dart';
 
-class EmotionSelectorPage extends StatefulWidget {
-  final String title;
-  final EmozioneCompanion emozioneCompanion;
-  const EmotionSelectorPage({super.key, required this.title, required this.emozioneCompanion});
+import '../DataBase/database.dart';
+import 'EmotionSelectionPage/emotion_selection.dart';
+
+class EmotionSelectionPage extends StatefulWidget {
+  const EmotionSelectionPage({super.key});
 
   @override
-  State<EmotionSelectorPage> createState() => _EmotionSelectorPageState();
+  State<EmotionSelectionPage> createState() => _EmotionSelectionPageState();
 }
 
-class _EmotionSelectorPageState extends State<EmotionSelectorPage> {
-  late AppDataBase db;
-  late TextEditingController descriptionEditingController;
-  late TextEditingController imgPathEditingController;
+class _EmotionSelectionPageState extends State<EmotionSelectionPage> {
+  late AppDataBase dataBase;
+
   @override
   Widget build(BuildContext context) {
-    db = Provider.of<AppDataBase>(context);
+    dataBase = Provider.of<AppDataBase>(context);
+
     return Scaffold(
-      appBar: _getSelectorAppBar(),
-      body: Image.asset('assets/images/uncertain.png')
-    );
-  }
-
-
-  _getSelectorAppBar() {
-    return AppBar(
-      backgroundColor: Colors.white,
-      leading: IconButton(onPressed: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
-      }, icon: Icon(Icons.keyboard_arrow_left_outlined, color: Colors.black,size: 40,)),
-      title: Text(
-        widget.title,
-        style: const TextStyle(color: Colors.black, fontSize: 30),
+      backgroundColor: Colors.yellow[200],
+      appBar: AppBar(
+        title: const Text("Seleziona il tuo stato emotivo attuale"),
+        backgroundColor: Colors.orangeAccent,
+        elevation: 4,
+      ),
+      body: FutureBuilder<List<EmozioneData>>(
+        future: _getEmozioneFromDataBase(),
+        builder: (context, snapshot) {
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                Expanded(
+                    child: EmotionSeletionWidget(snapshot: snapshot),
+                ),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+                Text("data"),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
+
+  Future<List<EmozioneData>> _getEmozioneFromDataBase() async {
+    try {
+      // Recupero emozioni dal database
+      final result = await dataBase.getEmozioneList();
+      // Emozioni recuperate
+      return result;
+    } catch (e) {
+      print('Errore nel recupero emozioni: $e');
+      rethrow;
+    }
+  }
+/*
+  void _navigateToDetail(String title, EmozioneCompanion emozioneCompanion) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EmotionSelectionPage(
+          title: title,
+          emozioneCompanion: emozioneCompanion,
+        ),
+      ),
+    );
+  }*/
 }
+
