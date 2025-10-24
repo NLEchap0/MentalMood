@@ -3,7 +3,37 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'dart:convert';
 part 'database.g.dart';
+
+
+// Questo convertitore gestisce la trasformazione tra List<String> e String JSON
+class StringListConverter extends TypeConverter<List<String>, String> {
+  // Converte List<String> in String (per il salvataggio nel DB)
+  @override
+  List<String> fromSql(String fromDb) {
+    if (fromDb.isEmpty) {
+      return [];
+    }
+    // Assumendo che il JSON sia salvato come '[ "motivo1", "motivo2" ]'
+    // Usiamo dart:convert per decodificare il JSON
+    final decoded = json.decode(fromDb) as List;
+    return decoded.map((e) => e.toString()).toList();
+  }
+
+  // Converte String in List<String> (per l'utilizzo nell'app)
+  @override
+  String toSql(List<String> value) {
+    // Usiamo dart:convert per codificare la List<String> in una stringa JSON
+    return json.encode(value);
+  }
+}
+
+class Motivazione extends Table{ //the motivation table of the database
+  TextColumn get testo => text()(); //the text of the motivation
+  @override
+  Set<Column> get primaryKey => {testo};
+}
 
 class Emozione extends Table{ //the emotion table of the database
   TextColumn get nome => text()(); //the name value of the emotion
@@ -15,8 +45,8 @@ class Emozione extends Table{ //the emotion table of the database
 
 class Utente extends Table{ //the user table of the database
   TextColumn get username=> text()(); //the username of the user
-  TextColumn get nome => text()(); //the full name of the user
-  IntColumn get dataNascita => integer()(); //the date of birth of the user
+  TextColumn get nome => text()(); //the name of the user
+  DateTimeColumn get dataNascita => dateTime()(); //the date of birth of the user
   @override
   Set<Column> get primaryKey => {username};
 }
@@ -30,15 +60,15 @@ class Consiglio extends Table{ //the advice table of the database
   Set<Column> get primaryKey => {id};
 }
 
-
+// Tabella di join tra Emozione, Utente e Motivazione, insieme alla data di registrazione
 class EmozioneRegistrata extends Table {
   TextColumn get utenteUsername => text().references(Utente, #username)();
   TextColumn get emozioneNome => text().references(Emozione, #nome)();
+  TextColumn get motivazioneTesto => text().references(Motivazione, #testo)();
   DateTimeColumn get dataRegistrazione => dateTime()();
   @override
-  Set<Column> get primaryKey => {utenteUsername, emozioneNome, dataRegistrazione};
+  Set<Column> get primaryKey => {utenteUsername, emozioneNome, motivazioneTesto, dataRegistrazione};
 }
-
 
 LazyDatabase _openConnection(){
   // The LazyDatabase util lets us find the right location for the file async.
@@ -53,7 +83,7 @@ LazyDatabase _openConnection(){
 
 // This annotation tells drift to prepare a database
 // class that uses the tables we just defined.
-@DriftDatabase(tables: [Emozione, Utente, Consiglio, EmozioneRegistrata])
+@DriftDatabase(tables: [Emozione, Utente, Consiglio, EmozioneRegistrata, Motivazione])
 class AppDataBase extends _$AppDataBase{
   // We tell the database where to store the data with this constructor.
   AppDataBase(): super(_openConnection());
@@ -88,8 +118,20 @@ class AppDataBase extends _$AppDataBase{
   Future<List<ConsiglioData>> getConsiglioList() async{
     return await select(consiglio).get();
   }
-  Future<List<EmozioneRegistrataData>> getEmozioneRegistrataList() async{
-    return await select(emozioneRegistrata).get();
+  Future<List<MotivazioneData>> getMotivazioneList() async{
+    return await select(motivazione).get();
+  }
+
+  Future<void> deleteMotivazione(testo) async {
+    await (delete(motivazione)..where((tbl) => tbl.testo.equals(testo))).go();
+  }
+
+  Future<void> deleteEmozione(nome) async {
+    await (delete(emozione)..where((tbl) => tbl.nome.equals(nome))).go();
+  }
+
+  Future<void> insertUtente(UtenteCompanion utente) async {
+    await into(this.utente).insert(utente);
   }
 }
 

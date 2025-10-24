@@ -1,85 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:mental_mood/DataBase/database.dart';
-import 'package:provider/provider.dart';
 
-class EmotionSeletionWidget extends StatefulWidget {
-  final AsyncSnapshot<List<EmozioneData>> snapshot;
-  const EmotionSeletionWidget({super.key, required this.snapshot});
+class EmotionSeletionWidget extends StatelessWidget {
+  final ValueChanged<EmozioneData> onEmozioneSelected;
+  final List<EmozioneData> emozioni;
 
-  @override
-  State<EmotionSeletionWidget> createState() => _EmotionSeletionWidgetState();
-}
+  const EmotionSeletionWidget({super.key, required this.emozioni, required this.onEmozioneSelected});
 
-class _EmotionSeletionWidgetState extends State<EmotionSeletionWidget> {
-  late AppDataBase db;
-  late TextEditingController descriptionEditingController;
-  late TextEditingController imgPathEditingController;
   @override
   Widget build(BuildContext context) {
-    db = Provider.of<AppDataBase>(context);
-    return controlloDatiEmozioni(widget.snapshot);
-  }
-
-
-  Widget controlloDatiEmozioni(AsyncSnapshot<List<EmozioneData>> snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 20),
-            Text("Caricamento emozioni..."),
-          ],
-        ),
-      );
-    }
-    if (snapshot.hasError) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error, size: 64, color: Colors.red),
-            SizedBox(height: 20),
-            Text(
-              "Errore nel caricamento:",
-              style: TextStyle(fontSize: 20),
-            ),
-            SizedBox(height: 10),
-            Text(
-              "${snapshot.error}",
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
-    }
-    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.sentiment_dissatisfied, size: 64),
-            SizedBox(height: 20),
-            Text(
-              "Nessuna emozione trovata",
-              style: TextStyle(fontSize: 20),
-            ),
-            SizedBox(height: 10),
-            Text("Prova a riavviare l'app"),
-          ],
-        ),
-      );
-    }
-
-    // Se tutto è ok, mostra la lista delle emozioni
-    final emozioni = snapshot.data!;
     return listEmozioniUI(emozioni);
   }
 
   Widget listEmozioniUI(List<EmozioneData> listEmozioni) {
     print('🎨 Building lista con ${listEmozioni.length} emozioni');
     return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       itemCount: listEmozioni.length,
       itemBuilder: (context, index) {
@@ -104,15 +41,10 @@ class _EmotionSeletionWidgetState extends State<EmotionSeletionWidget> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             /*subtitle: Text("Valore: ${emozione.valore}"),*/
-            onTap: () {/*
-              _navigateToDetail(
-                emozione.nome,
-                EmozioneCompanion(
-                  nome: Value(emozione.nome),
-                  imgPath: Value(emozione.imgPath),
-                  valore: Value(emozione.valore),
-                ),
-              );*/
+            onTap: () async {
+              onEmozioneSelected(emozione);
+              //final db = AppDataBase(); // oppure usa il provider se ce l’hai
+              //await db.deleteEmozione(emozione.nome);
             },
           ),
         );

@@ -294,11 +294,11 @@ class $UtenteTable extends Utente with TableInfo<$UtenteTable, UtenteData> {
     'dataNascita',
   );
   @override
-  late final GeneratedColumn<int> dataNascita = GeneratedColumn<int>(
+  late final GeneratedColumn<DateTime> dataNascita = GeneratedColumn<DateTime>(
     'data_nascita',
     aliasedName,
     false,
-    type: DriftSqlType.int,
+    type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
   @override
@@ -360,7 +360,7 @@ class $UtenteTable extends Utente with TableInfo<$UtenteTable, UtenteData> {
         data['${effectivePrefix}nome'],
       )!,
       dataNascita: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
+        DriftSqlType.dateTime,
         data['${effectivePrefix}data_nascita'],
       )!,
     );
@@ -375,7 +375,7 @@ class $UtenteTable extends Utente with TableInfo<$UtenteTable, UtenteData> {
 class UtenteData extends DataClass implements Insertable<UtenteData> {
   final String username;
   final String nome;
-  final int dataNascita;
+  final DateTime dataNascita;
   const UtenteData({
     required this.username,
     required this.nome,
@@ -386,7 +386,7 @@ class UtenteData extends DataClass implements Insertable<UtenteData> {
     final map = <String, Expression>{};
     map['username'] = Variable<String>(username);
     map['nome'] = Variable<String>(nome);
-    map['data_nascita'] = Variable<int>(dataNascita);
+    map['data_nascita'] = Variable<DateTime>(dataNascita);
     return map;
   }
 
@@ -406,7 +406,7 @@ class UtenteData extends DataClass implements Insertable<UtenteData> {
     return UtenteData(
       username: serializer.fromJson<String>(json['username']),
       nome: serializer.fromJson<String>(json['nome']),
-      dataNascita: serializer.fromJson<int>(json['dataNascita']),
+      dataNascita: serializer.fromJson<DateTime>(json['dataNascita']),
     );
   }
   @override
@@ -415,16 +415,19 @@ class UtenteData extends DataClass implements Insertable<UtenteData> {
     return <String, dynamic>{
       'username': serializer.toJson<String>(username),
       'nome': serializer.toJson<String>(nome),
-      'dataNascita': serializer.toJson<int>(dataNascita),
+      'dataNascita': serializer.toJson<DateTime>(dataNascita),
     };
   }
 
-  UtenteData copyWith({String? username, String? nome, int? dataNascita}) =>
-      UtenteData(
-        username: username ?? this.username,
-        nome: nome ?? this.nome,
-        dataNascita: dataNascita ?? this.dataNascita,
-      );
+  UtenteData copyWith({
+    String? username,
+    String? nome,
+    DateTime? dataNascita,
+  }) => UtenteData(
+    username: username ?? this.username,
+    nome: nome ?? this.nome,
+    dataNascita: dataNascita ?? this.dataNascita,
+  );
   UtenteData copyWithCompanion(UtenteCompanion data) {
     return UtenteData(
       username: data.username.present ? data.username.value : this.username,
@@ -459,7 +462,7 @@ class UtenteData extends DataClass implements Insertable<UtenteData> {
 class UtenteCompanion extends UpdateCompanion<UtenteData> {
   final Value<String> username;
   final Value<String> nome;
-  final Value<int> dataNascita;
+  final Value<DateTime> dataNascita;
   final Value<int> rowid;
   const UtenteCompanion({
     this.username = const Value.absent(),
@@ -470,7 +473,7 @@ class UtenteCompanion extends UpdateCompanion<UtenteData> {
   UtenteCompanion.insert({
     required String username,
     required String nome,
-    required int dataNascita,
+    required DateTime dataNascita,
     this.rowid = const Value.absent(),
   }) : username = Value(username),
        nome = Value(nome),
@@ -478,7 +481,7 @@ class UtenteCompanion extends UpdateCompanion<UtenteData> {
   static Insertable<UtenteData> custom({
     Expression<String>? username,
     Expression<String>? nome,
-    Expression<int>? dataNascita,
+    Expression<DateTime>? dataNascita,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -492,7 +495,7 @@ class UtenteCompanion extends UpdateCompanion<UtenteData> {
   UtenteCompanion copyWith({
     Value<String>? username,
     Value<String>? nome,
-    Value<int>? dataNascita,
+    Value<DateTime>? dataNascita,
     Value<int>? rowid,
   }) {
     return UtenteCompanion(
@@ -513,7 +516,7 @@ class UtenteCompanion extends UpdateCompanion<UtenteData> {
       map['nome'] = Variable<String>(nome.value);
     }
     if (dataNascita.present) {
-      map['data_nascita'] = Variable<int>(dataNascita.value);
+      map['data_nascita'] = Variable<DateTime>(dataNascita.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -846,6 +849,166 @@ class ConsiglioCompanion extends UpdateCompanion<ConsiglioData> {
   }
 }
 
+class $MotivazioneTable extends Motivazione
+    with TableInfo<$MotivazioneTable, MotivazioneData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MotivazioneTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _testoMeta = const VerificationMeta('testo');
+  @override
+  late final GeneratedColumn<String> testo = GeneratedColumn<String>(
+    'testo',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [testo];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'motivazione';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MotivazioneData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('testo')) {
+      context.handle(
+        _testoMeta,
+        testo.isAcceptableOrUnknown(data['testo']!, _testoMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_testoMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {testo};
+  @override
+  MotivazioneData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MotivazioneData(
+      testo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}testo'],
+      )!,
+    );
+  }
+
+  @override
+  $MotivazioneTable createAlias(String alias) {
+    return $MotivazioneTable(attachedDatabase, alias);
+  }
+}
+
+class MotivazioneData extends DataClass implements Insertable<MotivazioneData> {
+  final String testo;
+  const MotivazioneData({required this.testo});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['testo'] = Variable<String>(testo);
+    return map;
+  }
+
+  MotivazioneCompanion toCompanion(bool nullToAbsent) {
+    return MotivazioneCompanion(testo: Value(testo));
+  }
+
+  factory MotivazioneData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MotivazioneData(testo: serializer.fromJson<String>(json['testo']));
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{'testo': serializer.toJson<String>(testo)};
+  }
+
+  MotivazioneData copyWith({String? testo}) =>
+      MotivazioneData(testo: testo ?? this.testo);
+  MotivazioneData copyWithCompanion(MotivazioneCompanion data) {
+    return MotivazioneData(
+      testo: data.testo.present ? data.testo.value : this.testo,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MotivazioneData(')
+          ..write('testo: $testo')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => testo.hashCode;
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MotivazioneData && other.testo == this.testo);
+}
+
+class MotivazioneCompanion extends UpdateCompanion<MotivazioneData> {
+  final Value<String> testo;
+  final Value<int> rowid;
+  const MotivazioneCompanion({
+    this.testo = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MotivazioneCompanion.insert({
+    required String testo,
+    this.rowid = const Value.absent(),
+  }) : testo = Value(testo);
+  static Insertable<MotivazioneData> custom({
+    Expression<String>? testo,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (testo != null) 'testo': testo,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MotivazioneCompanion copyWith({Value<String>? testo, Value<int>? rowid}) {
+    return MotivazioneCompanion(
+      testo: testo ?? this.testo,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (testo.present) {
+      map['testo'] = Variable<String>(testo.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MotivazioneCompanion(')
+          ..write('testo: $testo, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $EmozioneRegistrataTable extends EmozioneRegistrata
     with TableInfo<$EmozioneRegistrataTable, EmozioneRegistrataData> {
   @override
@@ -880,6 +1043,20 @@ class $EmozioneRegistrataTable extends EmozioneRegistrata
       'REFERENCES emozione (nome)',
     ),
   );
+  static const VerificationMeta _motivazioneTestoMeta = const VerificationMeta(
+    'motivazioneTesto',
+  );
+  @override
+  late final GeneratedColumn<String> motivazioneTesto = GeneratedColumn<String>(
+    'motivazione_testo',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES motivazione (testo)',
+    ),
+  );
   static const VerificationMeta _dataRegistrazioneMeta = const VerificationMeta(
     'dataRegistrazione',
   );
@@ -896,6 +1073,7 @@ class $EmozioneRegistrataTable extends EmozioneRegistrata
   List<GeneratedColumn> get $columns => [
     utenteUsername,
     emozioneNome,
+    motivazioneTesto,
     dataRegistrazione,
   ];
   @override
@@ -932,6 +1110,17 @@ class $EmozioneRegistrataTable extends EmozioneRegistrata
     } else if (isInserting) {
       context.missing(_emozioneNomeMeta);
     }
+    if (data.containsKey('motivazione_testo')) {
+      context.handle(
+        _motivazioneTestoMeta,
+        motivazioneTesto.isAcceptableOrUnknown(
+          data['motivazione_testo']!,
+          _motivazioneTestoMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_motivazioneTestoMeta);
+    }
     if (data.containsKey('data_registrazione')) {
       context.handle(
         _dataRegistrazioneMeta,
@@ -950,6 +1139,7 @@ class $EmozioneRegistrataTable extends EmozioneRegistrata
   Set<GeneratedColumn> get $primaryKey => {
     utenteUsername,
     emozioneNome,
+    motivazioneTesto,
     dataRegistrazione,
   };
   @override
@@ -963,6 +1153,10 @@ class $EmozioneRegistrataTable extends EmozioneRegistrata
       emozioneNome: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}emozione_nome'],
+      )!,
+      motivazioneTesto: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}motivazione_testo'],
       )!,
       dataRegistrazione: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -981,10 +1175,12 @@ class EmozioneRegistrataData extends DataClass
     implements Insertable<EmozioneRegistrataData> {
   final String utenteUsername;
   final String emozioneNome;
+  final String motivazioneTesto;
   final DateTime dataRegistrazione;
   const EmozioneRegistrataData({
     required this.utenteUsername,
     required this.emozioneNome,
+    required this.motivazioneTesto,
     required this.dataRegistrazione,
   });
   @override
@@ -992,6 +1188,7 @@ class EmozioneRegistrataData extends DataClass
     final map = <String, Expression>{};
     map['utente_username'] = Variable<String>(utenteUsername);
     map['emozione_nome'] = Variable<String>(emozioneNome);
+    map['motivazione_testo'] = Variable<String>(motivazioneTesto);
     map['data_registrazione'] = Variable<DateTime>(dataRegistrazione);
     return map;
   }
@@ -1000,6 +1197,7 @@ class EmozioneRegistrataData extends DataClass
     return EmozioneRegistrataCompanion(
       utenteUsername: Value(utenteUsername),
       emozioneNome: Value(emozioneNome),
+      motivazioneTesto: Value(motivazioneTesto),
       dataRegistrazione: Value(dataRegistrazione),
     );
   }
@@ -1012,6 +1210,7 @@ class EmozioneRegistrataData extends DataClass
     return EmozioneRegistrataData(
       utenteUsername: serializer.fromJson<String>(json['utenteUsername']),
       emozioneNome: serializer.fromJson<String>(json['emozioneNome']),
+      motivazioneTesto: serializer.fromJson<String>(json['motivazioneTesto']),
       dataRegistrazione: serializer.fromJson<DateTime>(
         json['dataRegistrazione'],
       ),
@@ -1023,6 +1222,7 @@ class EmozioneRegistrataData extends DataClass
     return <String, dynamic>{
       'utenteUsername': serializer.toJson<String>(utenteUsername),
       'emozioneNome': serializer.toJson<String>(emozioneNome),
+      'motivazioneTesto': serializer.toJson<String>(motivazioneTesto),
       'dataRegistrazione': serializer.toJson<DateTime>(dataRegistrazione),
     };
   }
@@ -1030,10 +1230,12 @@ class EmozioneRegistrataData extends DataClass
   EmozioneRegistrataData copyWith({
     String? utenteUsername,
     String? emozioneNome,
+    String? motivazioneTesto,
     DateTime? dataRegistrazione,
   }) => EmozioneRegistrataData(
     utenteUsername: utenteUsername ?? this.utenteUsername,
     emozioneNome: emozioneNome ?? this.emozioneNome,
+    motivazioneTesto: motivazioneTesto ?? this.motivazioneTesto,
     dataRegistrazione: dataRegistrazione ?? this.dataRegistrazione,
   );
   EmozioneRegistrataData copyWithCompanion(EmozioneRegistrataCompanion data) {
@@ -1044,6 +1246,9 @@ class EmozioneRegistrataData extends DataClass
       emozioneNome: data.emozioneNome.present
           ? data.emozioneNome.value
           : this.emozioneNome,
+      motivazioneTesto: data.motivazioneTesto.present
+          ? data.motivazioneTesto.value
+          : this.motivazioneTesto,
       dataRegistrazione: data.dataRegistrazione.present
           ? data.dataRegistrazione.value
           : this.dataRegistrazione,
@@ -1055,20 +1260,26 @@ class EmozioneRegistrataData extends DataClass
     return (StringBuffer('EmozioneRegistrataData(')
           ..write('utenteUsername: $utenteUsername, ')
           ..write('emozioneNome: $emozioneNome, ')
+          ..write('motivazioneTesto: $motivazioneTesto, ')
           ..write('dataRegistrazione: $dataRegistrazione')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(utenteUsername, emozioneNome, dataRegistrazione);
+  int get hashCode => Object.hash(
+    utenteUsername,
+    emozioneNome,
+    motivazioneTesto,
+    dataRegistrazione,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is EmozioneRegistrataData &&
           other.utenteUsername == this.utenteUsername &&
           other.emozioneNome == this.emozioneNome &&
+          other.motivazioneTesto == this.motivazioneTesto &&
           other.dataRegistrazione == this.dataRegistrazione);
 }
 
@@ -1076,31 +1287,37 @@ class EmozioneRegistrataCompanion
     extends UpdateCompanion<EmozioneRegistrataData> {
   final Value<String> utenteUsername;
   final Value<String> emozioneNome;
+  final Value<String> motivazioneTesto;
   final Value<DateTime> dataRegistrazione;
   final Value<int> rowid;
   const EmozioneRegistrataCompanion({
     this.utenteUsername = const Value.absent(),
     this.emozioneNome = const Value.absent(),
+    this.motivazioneTesto = const Value.absent(),
     this.dataRegistrazione = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   EmozioneRegistrataCompanion.insert({
     required String utenteUsername,
     required String emozioneNome,
+    required String motivazioneTesto,
     required DateTime dataRegistrazione,
     this.rowid = const Value.absent(),
   }) : utenteUsername = Value(utenteUsername),
        emozioneNome = Value(emozioneNome),
+       motivazioneTesto = Value(motivazioneTesto),
        dataRegistrazione = Value(dataRegistrazione);
   static Insertable<EmozioneRegistrataData> custom({
     Expression<String>? utenteUsername,
     Expression<String>? emozioneNome,
+    Expression<String>? motivazioneTesto,
     Expression<DateTime>? dataRegistrazione,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (utenteUsername != null) 'utente_username': utenteUsername,
       if (emozioneNome != null) 'emozione_nome': emozioneNome,
+      if (motivazioneTesto != null) 'motivazione_testo': motivazioneTesto,
       if (dataRegistrazione != null) 'data_registrazione': dataRegistrazione,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1109,12 +1326,14 @@ class EmozioneRegistrataCompanion
   EmozioneRegistrataCompanion copyWith({
     Value<String>? utenteUsername,
     Value<String>? emozioneNome,
+    Value<String>? motivazioneTesto,
     Value<DateTime>? dataRegistrazione,
     Value<int>? rowid,
   }) {
     return EmozioneRegistrataCompanion(
       utenteUsername: utenteUsername ?? this.utenteUsername,
       emozioneNome: emozioneNome ?? this.emozioneNome,
+      motivazioneTesto: motivazioneTesto ?? this.motivazioneTesto,
       dataRegistrazione: dataRegistrazione ?? this.dataRegistrazione,
       rowid: rowid ?? this.rowid,
     );
@@ -1128,6 +1347,9 @@ class EmozioneRegistrataCompanion
     }
     if (emozioneNome.present) {
       map['emozione_nome'] = Variable<String>(emozioneNome.value);
+    }
+    if (motivazioneTesto.present) {
+      map['motivazione_testo'] = Variable<String>(motivazioneTesto.value);
     }
     if (dataRegistrazione.present) {
       map['data_registrazione'] = Variable<DateTime>(dataRegistrazione.value);
@@ -1143,6 +1365,7 @@ class EmozioneRegistrataCompanion
     return (StringBuffer('EmozioneRegistrataCompanion(')
           ..write('utenteUsername: $utenteUsername, ')
           ..write('emozioneNome: $emozioneNome, ')
+          ..write('motivazioneTesto: $motivazioneTesto, ')
           ..write('dataRegistrazione: $dataRegistrazione, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1156,6 +1379,7 @@ abstract class _$AppDataBase extends GeneratedDatabase {
   late final $EmozioneTable emozione = $EmozioneTable(this);
   late final $UtenteTable utente = $UtenteTable(this);
   late final $ConsiglioTable consiglio = $ConsiglioTable(this);
+  late final $MotivazioneTable motivazione = $MotivazioneTable(this);
   late final $EmozioneRegistrataTable emozioneRegistrata =
       $EmozioneRegistrataTable(this);
   @override
@@ -1166,6 +1390,7 @@ abstract class _$AppDataBase extends GeneratedDatabase {
     emozione,
     utente,
     consiglio,
+    motivazione,
     emozioneRegistrata,
   ];
 }
@@ -1453,14 +1678,14 @@ typedef $$UtenteTableCreateCompanionBuilder =
     UtenteCompanion Function({
       required String username,
       required String nome,
-      required int dataNascita,
+      required DateTime dataNascita,
       Value<int> rowid,
     });
 typedef $$UtenteTableUpdateCompanionBuilder =
     UtenteCompanion Function({
       Value<String> username,
       Value<String> nome,
-      Value<int> dataNascita,
+      Value<DateTime> dataNascita,
       Value<int> rowid,
     });
 
@@ -1520,7 +1745,7 @@ class $$UtenteTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get dataNascita => $composableBuilder(
+  ColumnFilters<DateTime> get dataNascita => $composableBuilder(
     column: $table.dataNascita,
     builder: (column) => ColumnFilters(column),
   );
@@ -1570,7 +1795,7 @@ class $$UtenteTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get dataNascita => $composableBuilder(
+  ColumnOrderings<DateTime> get dataNascita => $composableBuilder(
     column: $table.dataNascita,
     builder: (column) => ColumnOrderings(column),
   );
@@ -1591,7 +1816,7 @@ class $$UtenteTableAnnotationComposer
   GeneratedColumn<String> get nome =>
       $composableBuilder(column: $table.nome, builder: (column) => column);
 
-  GeneratedColumn<int> get dataNascita => $composableBuilder(
+  GeneratedColumn<DateTime> get dataNascita => $composableBuilder(
     column: $table.dataNascita,
     builder: (column) => column,
   );
@@ -1653,7 +1878,7 @@ class $$UtenteTableTableManager
               ({
                 Value<String> username = const Value.absent(),
                 Value<String> nome = const Value.absent(),
-                Value<int> dataNascita = const Value.absent(),
+                Value<DateTime> dataNascita = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => UtenteCompanion(
                 username: username,
@@ -1665,7 +1890,7 @@ class $$UtenteTableTableManager
               ({
                 required String username,
                 required String nome,
-                required int dataNascita,
+                required DateTime dataNascita,
                 Value<int> rowid = const Value.absent(),
               }) => UtenteCompanion.insert(
                 username: username,
@@ -1909,10 +2134,243 @@ typedef $$ConsiglioTableProcessedTableManager =
       ConsiglioData,
       PrefetchHooks Function()
     >;
+typedef $$MotivazioneTableCreateCompanionBuilder =
+    MotivazioneCompanion Function({required String testo, Value<int> rowid});
+typedef $$MotivazioneTableUpdateCompanionBuilder =
+    MotivazioneCompanion Function({Value<String> testo, Value<int> rowid});
+
+final class $$MotivazioneTableReferences
+    extends BaseReferences<_$AppDataBase, $MotivazioneTable, MotivazioneData> {
+  $$MotivazioneTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<
+    $EmozioneRegistrataTable,
+    List<EmozioneRegistrataData>
+  >
+  _emozioneRegistrataRefsTable(_$AppDataBase db) =>
+      MultiTypedResultKey.fromTable(
+        db.emozioneRegistrata,
+        aliasName: $_aliasNameGenerator(
+          db.motivazione.testo,
+          db.emozioneRegistrata.motivazioneTesto,
+        ),
+      );
+
+  $$EmozioneRegistrataTableProcessedTableManager get emozioneRegistrataRefs {
+    final manager =
+        $$EmozioneRegistrataTableTableManager(
+          $_db,
+          $_db.emozioneRegistrata,
+        ).filter(
+          (f) => f.motivazioneTesto.testo.sqlEquals(
+            $_itemColumn<String>('testo')!,
+          ),
+        );
+
+    final cache = $_typedResult.readTableOrNull(
+      _emozioneRegistrataRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$MotivazioneTableFilterComposer
+    extends Composer<_$AppDataBase, $MotivazioneTable> {
+  $$MotivazioneTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get testo => $composableBuilder(
+    column: $table.testo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> emozioneRegistrataRefs(
+    Expression<bool> Function($$EmozioneRegistrataTableFilterComposer f) f,
+  ) {
+    final $$EmozioneRegistrataTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.testo,
+      referencedTable: $db.emozioneRegistrata,
+      getReferencedColumn: (t) => t.motivazioneTesto,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EmozioneRegistrataTableFilterComposer(
+            $db: $db,
+            $table: $db.emozioneRegistrata,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$MotivazioneTableOrderingComposer
+    extends Composer<_$AppDataBase, $MotivazioneTable> {
+  $$MotivazioneTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get testo => $composableBuilder(
+    column: $table.testo,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MotivazioneTableAnnotationComposer
+    extends Composer<_$AppDataBase, $MotivazioneTable> {
+  $$MotivazioneTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get testo =>
+      $composableBuilder(column: $table.testo, builder: (column) => column);
+
+  Expression<T> emozioneRegistrataRefs<T extends Object>(
+    Expression<T> Function($$EmozioneRegistrataTableAnnotationComposer a) f,
+  ) {
+    final $$EmozioneRegistrataTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.testo,
+          referencedTable: $db.emozioneRegistrata,
+          getReferencedColumn: (t) => t.motivazioneTesto,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$EmozioneRegistrataTableAnnotationComposer(
+                $db: $db,
+                $table: $db.emozioneRegistrata,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+}
+
+class $$MotivazioneTableTableManager
+    extends
+        RootTableManager<
+          _$AppDataBase,
+          $MotivazioneTable,
+          MotivazioneData,
+          $$MotivazioneTableFilterComposer,
+          $$MotivazioneTableOrderingComposer,
+          $$MotivazioneTableAnnotationComposer,
+          $$MotivazioneTableCreateCompanionBuilder,
+          $$MotivazioneTableUpdateCompanionBuilder,
+          (MotivazioneData, $$MotivazioneTableReferences),
+          MotivazioneData,
+          PrefetchHooks Function({bool emozioneRegistrataRefs})
+        > {
+  $$MotivazioneTableTableManager(_$AppDataBase db, $MotivazioneTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MotivazioneTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MotivazioneTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MotivazioneTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> testo = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MotivazioneCompanion(testo: testo, rowid: rowid),
+          createCompanionCallback:
+              ({
+                required String testo,
+                Value<int> rowid = const Value.absent(),
+              }) => MotivazioneCompanion.insert(testo: testo, rowid: rowid),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$MotivazioneTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({emozioneRegistrataRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (emozioneRegistrataRefs) db.emozioneRegistrata,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (emozioneRegistrataRefs)
+                    await $_getPrefetchedData<
+                      MotivazioneData,
+                      $MotivazioneTable,
+                      EmozioneRegistrataData
+                    >(
+                      currentTable: table,
+                      referencedTable: $$MotivazioneTableReferences
+                          ._emozioneRegistrataRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$MotivazioneTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).emozioneRegistrataRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where(
+                            (e) => e.motivazioneTesto == item.testo,
+                          ),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$MotivazioneTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDataBase,
+      $MotivazioneTable,
+      MotivazioneData,
+      $$MotivazioneTableFilterComposer,
+      $$MotivazioneTableOrderingComposer,
+      $$MotivazioneTableAnnotationComposer,
+      $$MotivazioneTableCreateCompanionBuilder,
+      $$MotivazioneTableUpdateCompanionBuilder,
+      (MotivazioneData, $$MotivazioneTableReferences),
+      MotivazioneData,
+      PrefetchHooks Function({bool emozioneRegistrataRefs})
+    >;
 typedef $$EmozioneRegistrataTableCreateCompanionBuilder =
     EmozioneRegistrataCompanion Function({
       required String utenteUsername,
       required String emozioneNome,
+      required String motivazioneTesto,
       required DateTime dataRegistrazione,
       Value<int> rowid,
     });
@@ -1920,6 +2378,7 @@ typedef $$EmozioneRegistrataTableUpdateCompanionBuilder =
     EmozioneRegistrataCompanion Function({
       Value<String> utenteUsername,
       Value<String> emozioneNome,
+      Value<String> motivazioneTesto,
       Value<DateTime> dataRegistrazione,
       Value<int> rowid,
     });
@@ -1980,6 +2439,28 @@ final class $$EmozioneRegistrataTableReferences
       manager.$state.copyWith(prefetchedData: [item]),
     );
   }
+
+  static $MotivazioneTable _motivazioneTestoTable(_$AppDataBase db) =>
+      db.motivazione.createAlias(
+        $_aliasNameGenerator(
+          db.emozioneRegistrata.motivazioneTesto,
+          db.motivazione.testo,
+        ),
+      );
+
+  $$MotivazioneTableProcessedTableManager get motivazioneTesto {
+    final $_column = $_itemColumn<String>('motivazione_testo')!;
+
+    final manager = $$MotivazioneTableTableManager(
+      $_db,
+      $_db.motivazione,
+    ).filter((f) => f.testo.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_motivazioneTestoTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
 }
 
 class $$EmozioneRegistrataTableFilterComposer
@@ -2033,6 +2514,29 @@ class $$EmozioneRegistrataTableFilterComposer
           }) => $$EmozioneTableFilterComposer(
             $db: $db,
             $table: $db.emozione,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$MotivazioneTableFilterComposer get motivazioneTesto {
+    final $$MotivazioneTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.motivazioneTesto,
+      referencedTable: $db.motivazione,
+      getReferencedColumn: (t) => t.testo,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MotivazioneTableFilterComposer(
+            $db: $db,
+            $table: $db.motivazione,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -2102,6 +2606,29 @@ class $$EmozioneRegistrataTableOrderingComposer
     );
     return composer;
   }
+
+  $$MotivazioneTableOrderingComposer get motivazioneTesto {
+    final $$MotivazioneTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.motivazioneTesto,
+      referencedTable: $db.motivazione,
+      getReferencedColumn: (t) => t.testo,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MotivazioneTableOrderingComposer(
+            $db: $db,
+            $table: $db.motivazione,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$EmozioneRegistrataTableAnnotationComposer
@@ -2163,6 +2690,29 @@ class $$EmozioneRegistrataTableAnnotationComposer
     );
     return composer;
   }
+
+  $$MotivazioneTableAnnotationComposer get motivazioneTesto {
+    final $$MotivazioneTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.motivazioneTesto,
+      referencedTable: $db.motivazione,
+      getReferencedColumn: (t) => t.testo,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MotivazioneTableAnnotationComposer(
+            $db: $db,
+            $table: $db.motivazione,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$EmozioneRegistrataTableTableManager
@@ -2178,7 +2728,11 @@ class $$EmozioneRegistrataTableTableManager
           $$EmozioneRegistrataTableUpdateCompanionBuilder,
           (EmozioneRegistrataData, $$EmozioneRegistrataTableReferences),
           EmozioneRegistrataData,
-          PrefetchHooks Function({bool utenteUsername, bool emozioneNome})
+          PrefetchHooks Function({
+            bool utenteUsername,
+            bool emozioneNome,
+            bool motivazioneTesto,
+          })
         > {
   $$EmozioneRegistrataTableTableManager(
     _$AppDataBase db,
@@ -2200,11 +2754,13 @@ class $$EmozioneRegistrataTableTableManager
               ({
                 Value<String> utenteUsername = const Value.absent(),
                 Value<String> emozioneNome = const Value.absent(),
+                Value<String> motivazioneTesto = const Value.absent(),
                 Value<DateTime> dataRegistrazione = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EmozioneRegistrataCompanion(
                 utenteUsername: utenteUsername,
                 emozioneNome: emozioneNome,
+                motivazioneTesto: motivazioneTesto,
                 dataRegistrazione: dataRegistrazione,
                 rowid: rowid,
               ),
@@ -2212,11 +2768,13 @@ class $$EmozioneRegistrataTableTableManager
               ({
                 required String utenteUsername,
                 required String emozioneNome,
+                required String motivazioneTesto,
                 required DateTime dataRegistrazione,
                 Value<int> rowid = const Value.absent(),
               }) => EmozioneRegistrataCompanion.insert(
                 utenteUsername: utenteUsername,
                 emozioneNome: emozioneNome,
+                motivazioneTesto: motivazioneTesto,
                 dataRegistrazione: dataRegistrazione,
                 rowid: rowid,
               ),
@@ -2229,7 +2787,11 @@ class $$EmozioneRegistrataTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({utenteUsername = false, emozioneNome = false}) {
+              ({
+                utenteUsername = false,
+                emozioneNome = false,
+                motivazioneTesto = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [],
@@ -2279,6 +2841,21 @@ class $$EmozioneRegistrataTableTableManager
                                   )
                                   as T;
                         }
+                        if (motivazioneTesto) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.motivazioneTesto,
+                                    referencedTable:
+                                        $$EmozioneRegistrataTableReferences
+                                            ._motivazioneTestoTable(db),
+                                    referencedColumn:
+                                        $$EmozioneRegistrataTableReferences
+                                            ._motivazioneTestoTable(db)
+                                            .testo,
+                                  )
+                                  as T;
+                        }
 
                         return state;
                       },
@@ -2303,7 +2880,11 @@ typedef $$EmozioneRegistrataTableProcessedTableManager =
       $$EmozioneRegistrataTableUpdateCompanionBuilder,
       (EmozioneRegistrataData, $$EmozioneRegistrataTableReferences),
       EmozioneRegistrataData,
-      PrefetchHooks Function({bool utenteUsername, bool emozioneNome})
+      PrefetchHooks Function({
+        bool utenteUsername,
+        bool emozioneNome,
+        bool motivazioneTesto,
+      })
     >;
 
 class $AppDataBaseManager {
@@ -2315,6 +2896,8 @@ class $AppDataBaseManager {
       $$UtenteTableTableManager(_db, _db.utente);
   $$ConsiglioTableTableManager get consiglio =>
       $$ConsiglioTableTableManager(_db, _db.consiglio);
+  $$MotivazioneTableTableManager get motivazione =>
+      $$MotivazioneTableTableManager(_db, _db.motivazione);
   $$EmozioneRegistrataTableTableManager get emozioneRegistrata =>
       $$EmozioneRegistrataTableTableManager(_db, _db.emozioneRegistrata);
 }

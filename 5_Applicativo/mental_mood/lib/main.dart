@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mental_mood/Pages/emotion_selection_page.dart';
+import 'package:mental_mood/Pages/UserSelectionPage/user_selection_page.dart';
 import 'package:provider/provider.dart';
 import 'package:mental_mood/Utils/database_util.dart';
-
 import 'DataBase/database.dart';
 
 
@@ -17,6 +16,7 @@ void main() async {
     //Popolamento emozioni predefinite
     DatabaseUtil dbUtil = DatabaseUtil();
     await dbUtil.populateDefaultEmotions(db);
+    await dbUtil.populateDefaultMotivations(db);
 
     runApp(
       Provider(
@@ -24,7 +24,7 @@ void main() async {
         dispose: (_, AppDataBase db) => db.close(),
         child: const MaterialApp(
           debugShowCheckedModeBanner: false,
-          home: EmotionSelectionPage(),
+          home: UserSelectionPage(),
         ),
       ),
     );

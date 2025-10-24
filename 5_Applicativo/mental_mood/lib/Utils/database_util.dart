@@ -11,7 +11,7 @@ class DatabaseUtil {
 
         // Inserisci una per una per debugging
         await db.into(db.emozione).insert(EmozioneCompanion.insert(
-            nome: 'Disperato / Depresso',
+            nome: 'Disperato o Depresso',
             imgPath: 'assets/images/sad.png',
             valore: 0
         ));
@@ -26,7 +26,7 @@ class DatabaseUtil {
 
         // Continua con le altre...
         await db.into(db.emozione).insert(EmozioneCompanion.insert(
-            nome: 'Ansioso / Stressato',
+            nome: 'Ansioso o Stressato',
             imgPath: 'assets/images/anxious.png',
             valore: 2
         ));
@@ -38,25 +38,25 @@ class DatabaseUtil {
         ));
 
         await db.into(db.emozione).insert(EmozioneCompanion.insert(
-            nome: 'Indifferente / Apatico',
+            nome: 'Apatico',
             imgPath: 'assets/images/uncertain.png',
             valore: 4
         ));
 
         await db.into(db.emozione).insert(EmozioneCompanion.insert(
-            nome: 'Neutrale / Stabile',
+            nome: 'Neutrale',
             imgPath: 'assets/images/uncertain.png',
             valore: 5
         ));
 
         await db.into(db.emozione).insert(EmozioneCompanion.insert(
-            nome: 'Sereno / Calmo',
+            nome: 'Sereno',
             imgPath: 'assets/images/ok.png',
             valore: 6
         ));
 
         await db.into(db.emozione).insert(EmozioneCompanion.insert(
-            nome: 'Soddisfatto / Contento',
+            nome: 'Soddisfatto',
             imgPath: 'assets/images/ok.png',
             valore: 7
         ));
@@ -68,7 +68,7 @@ class DatabaseUtil {
         ));
 
         await db.into(db.emozione).insert(EmozioneCompanion.insert(
-            nome: 'Entusiasta / Euforico',
+            nome: 'Entusiasta',
             imgPath: 'assets/images/happy.png',
             valore: 9
         ));
@@ -78,88 +78,85 @@ class DatabaseUtil {
       rethrow;
     }
   }
-}
 
 
-
-/*import '../DataBase/database.dart';
-
-class DatabaseUtil {
-  Future<void> populateDefaultEmotions(AppDataBase db) async {
+  Future<void> populateDefaultMotivations(AppDataBase db) async {
     try {
-      // Verifica se ci sono già emozioni nel database
-      final existingEmotions = await db.getEmozioneList();
+      //Verifica motivazioni esistenti
 
-      if (existingEmotions.isEmpty) {
-        // Usa un batch per inserimenti multipli più efficienti
-        await db.batch((batch) {
-          batch.insert(db.emozione, EmozioneCompanion.insert(
-              nome: 'Disperato / Depresso',
-              imgPath: 'assets/images/sad.png',
-              valore: 0
-          ));
+      final existingMotivations = await db.getMotivazioneList();
+      if (existingMotivations.isEmpty) {
+        //Inserimento motivazioni predefinite
+        // Inserisci una per una per debugging
 
-          batch.insert(db.emozione, EmozioneCompanion.insert(
-              nome: 'Triste',
-              imgPath: 'assets/images/sad.png',
-              valore: 1
-          ));
+        await db.into(db.motivazione).insert(MotivazioneCompanion.insert(
+            testo: "Relazioni Sociali"
+        ));
+        print('   - Inserito: Relazioni Sociali');
 
-          batch.insert(db.emozione, EmozioneCompanion.insert(
-              nome: 'Ansioso / Stressato',
-              imgPath: 'assets/images/anxious.png',
-              valore: 2
-          ));
 
-          batch.insert(db.emozione, EmozioneCompanion.insert(
-              nome: 'Arrabbiato',
-              imgPath: 'assets/images/angry.png',
-              valore: 3
-          ));
+        await db.into(db.motivazione).insert(MotivazioneCompanion.insert(
+            testo: "Esercizio Fisico"
+        ));
+        print('   - Inserito: Esercizio Fisico');
 
-          batch.insert(db.emozione, EmozioneCompanion.insert(
-              nome: 'Indifferente / Apatico',
-              imgPath: 'assets/images/uncertain.png',
-              valore: 4
-          ));
 
-          batch.insert(db.emozione, EmozioneCompanion.insert(
-              nome: 'Neutrale / Stabile',
-              imgPath: 'assets/images/uncertain.png',
-              valore: 5
-          ));
+        await db.into(db.motivazione).insert(MotivazioneCompanion.insert(
+            testo: "Raggiungimento di Obiettivi"
+        ));
+        print('   - Inserito: Raggiungimento di Obiettivi');
 
-          batch.insert(db.emozione, EmozioneCompanion.insert(
-              nome: 'Sereno / Calmo',
-              imgPath: 'assets/images/ok.png',
-              valore: 6
-          ));
 
-          batch.insert(db.emozione, EmozioneCompanion.insert(
-              nome: 'Soddisfatto / Contento',
-              imgPath: 'assets/images/ok.png',
-              valore: 7
-          ));
+        await db.into(db.motivazione).insert(MotivazioneCompanion.insert(
+            testo: "Qualità del sonno"
+        ));
+        print('   - Inserito: Qualità del sonno');
 
-          batch.insert(db.emozione, EmozioneCompanion.insert(
-              nome: 'Felice',
-              imgPath: 'assets/images/happy.png',
-              valore: 8
-          ));
 
-          batch.insert(db.emozione, EmozioneCompanion.insert(
-              nome: 'Entusiasta / Euforico',
-              imgPath: 'assets/images/happy.png',
-              valore: 9
-          ));
-        });
+        await db.into(db.motivazione).insert(MotivazioneCompanion.insert(
+            testo: "Scuola o Lavoro"
+        ));
+        print('   - Inserito: Scuola o Lavoro');
 
-        print('Emozioni predefinite inserite con successo');
-      } else {
-        print('Emozioni già presenti nel database: ${existingEmotions.length}');
+
+        await db.into(db.motivazione).insert(MotivazioneCompanion.insert(
+            testo: "Condizioni meteorologiche"
+        ));
+        print('   - Inserito: Condizioni meteorologiche');
+
+
+        await db.into(db.motivazione).insert(MotivazioneCompanion.insert(
+            testo: "Dolore Fisico o Malattia"
+        ));
+        print('   - Inserito: Dolore Fisico o Malattia');
+
+
+        await db.into(db.motivazione).insert(MotivazioneCompanion.insert(
+            testo: "Esposizione alla Natura"
+        ));
+        print('   - Inserito: Esposizione alla Natura');
+
+
+        await db.into(db.motivazione).insert(MotivazioneCompanion.insert(
+            testo: "Musica"
+        ));
+        print('   - Inserito: Musica');
+
+
+        await db.into(db.motivazione).insert(MotivazioneCompanion.insert(
+            testo: "Disponibilità di Spazi Privati"
+        ));
+        print('   - Inserito: Disponibilità di Spazi Privati');
+
+
+        await db.into(db.motivazione).insert(MotivazioneCompanion.insert(
+            testo: "Rumori Improvvisi o Forti"
+        ));
+        print('   - Inserito: Rumori Improvvisi o Forti');
       }
     } catch (e) {
       print('Errore durante il popolamento del database: $e');
+      rethrow;
     }
   }
-}*/
+}

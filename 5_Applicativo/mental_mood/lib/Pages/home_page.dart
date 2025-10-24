@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mental_mood/DataBase/database.dart';
 import 'package:provider/provider.dart';
 
-import 'emotion_selection_page.dart';
+import 'EmotionSelectionPage/emotion_selection_page.dart';
 
 void main() {
   runApp(const HomePage());
@@ -104,10 +104,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _navigateToDetail(String title, EmozioneCompanion emozioneCompanion) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => EmotionSelectorPage(
-        title: title,
-        emozioneCompanion: emozioneCompanion
-    ),),);
+    Navigator.push(context, MaterialPageRoute(builder: (context) => EmotionSelectionPage()));
   }
 }
 

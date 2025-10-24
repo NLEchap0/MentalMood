@@ -30,6 +30,8 @@ environment:
 
 
 dependencies:
+  #others
+
   # dependencies for the database
   drift: ^2.18.0 # Molto più recente
   sqlite3_flutter_libs: ^0.5.40 # Molto più recente
