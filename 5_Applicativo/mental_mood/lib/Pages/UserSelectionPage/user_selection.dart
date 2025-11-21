@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:mental_mood/DataBase/database.dart';
-import 'package:mental_mood/Pages/home_page.dart';
 
 class UserSeletionWidget extends StatelessWidget {
   final ValueChanged<UtenteData> onUtenteSelected;
   final List<UtenteData> utenti;
   final bool deleteUtenti;
 
-  const UserSeletionWidget({super.key, required this.utenti, required this.onUtenteSelected, required bool this.deleteUtenti});
+  const UserSeletionWidget({super.key, required this.utenti, required this.onUtenteSelected, required this.deleteUtenti});
 
   @override
   Widget build(BuildContext context) {

@@ -1,8 +1,9 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mental_mood/Pages/menu.dart';
 import 'package:provider/provider.dart';
 import '../DataBase/database.dart';
+
+import '../Utils/notification_util.dart';
 
 class HomePage extends StatefulWidget {
   final UtenteData? user;
@@ -14,6 +15,39 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late AppDataBase dataBase;
+
+  @override void initState() {
+    // TODO: implement initState
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndScheduleNotifications();
+    });
+  }
+
+  void _checkAndScheduleNotifications() async{
+    if(widget.user != null){
+      final dataBase = Provider.of<AppDataBase>(context, listen: false);
+
+      print("Tentativo di scheduling delle notifiche");
+
+      NotificationUtil().scheduleIfEnabled(
+          dataBase,
+          widget.user,
+          dailyNotificationTime,
+          dailyNotificationTime2,
+          dailyNotificationTime3
+      );
+
+      print("Notifiche programmate correttamente.");
+    }
+  }
+
+  final TimeOfDay dailyNotificationTime = const TimeOfDay(hour: 10, minute: 0);
+  final TimeOfDay dailyNotificationTime2 = const TimeOfDay(hour: 15, minute: 40);
+  final TimeOfDay dailyNotificationTime3 = const TimeOfDay(hour: 20, minute: 0);
+
+  // Flag per eseguire la logica di scheduling una sola volta
+  bool _isScheduled = false;
 
   Future<List<EmozioneRegistrataData>> _getRegistrazioni() async {
     final userId = widget.user?.id;

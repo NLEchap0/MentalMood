@@ -1,4 +1,3 @@
-import 'dart:ffi';
 
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
@@ -10,7 +9,7 @@ import 'package:provider/provider.dart';
 
 class UserSettingsPage extends StatefulWidget {
   final UtenteData? user;
-  const UserSettingsPage({super.key, required UtenteData? this.user});
+  const UserSettingsPage({super.key, required this.user});
 
 
   @override
@@ -177,31 +176,75 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
 
                   return Column(
                     children: [
-                      DropdownButton<String>(
-                        value: _selectedCronologiaValue,
-                        onChanged: (newValue){
-                          _updateCronologia(dataBase, newValue, impostazioni.notifiche);
-                        },
-                        items: cronologiaItems.map((String selezione){
-                          return DropdownMenuItem<String>(
-                              value: selezione,
-                              child: new Text(selezione)
-                          );
-                        }).toList(),
+                      Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text("Eliminazioni dati ogni: ", style: const TextStyle(fontSize: 30)),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(8.0),
+                                border: Border.all(
+                                  color: Colors.black,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: DropdownButton<String>(
+                                alignment: AlignmentGeometry.center,
+                                underline: Container(height: 0),
+                                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.black, size: 36,),
+                                value: _selectedCronologiaValue,
+                                onChanged: (newValue){
+                                  _updateCronologia(dataBase, newValue, impostazioni.notifiche);
+                                },
+                                items: cronologiaItems.map((String selezione){
+                                  return DropdownMenuItem<String>(
+                                      value: selezione,
+                                      child: Center(child: Text(selezione, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.normal)))
+                                  );
+                                }).toList(),
+                              ),
+                            )
+                          ]
                       ),
-                      DropdownButton<String>(
-                        value: _selectedNotificaValue,
-                        onChanged: (newValue){
-                          _updateNotifica(dataBase, newValue, impostazioni.cronologia);
-                        },
-                        items: notificaItems.map((String selezione){
-                          return DropdownMenuItem<String>(
-                              value: selezione,
-                              child: new Text(selezione)
-                          );
-                        }).toList(),
+
+                      Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text("Notifiche di promemoria: ", style: const TextStyle(fontSize: 30)),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(8.0),
+                                border: Border.all(
+                                  color: Colors.black,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: DropdownButton<String>(
+                                alignment: AlignmentGeometry.center,
+                                underline: Container(height: 0),
+                                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.black, size: 36,),
+                                value: _selectedNotificaValue,
+                                onChanged: (newValue){
+                                  _updateNotifica(dataBase, newValue, impostazioni.cronologia);
+                                },
+                                items: notificaItems.map((String selezione){
+                                  return DropdownMenuItem<String>(
+                                    value: selezione,
+                                    child: Center(child: Text(selezione, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.normal)))
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ]
                       ),
-                      Text("Cronologia: ${impostazioni.cronologia}", style: const TextStyle(fontSize: 30)),
+
+
+
+
                       Text("Cronologia: ${impostazioni.cronologia}", style: const TextStyle(fontSize: 30)),
                       Text("Notifiche: ${impostazioni.notifiche ? 'Attive' : 'Disattive'}", style: const TextStyle(fontSize: 30)),
                     ],

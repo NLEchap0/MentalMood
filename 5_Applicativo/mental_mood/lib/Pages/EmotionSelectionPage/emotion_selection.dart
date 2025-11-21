@@ -6,7 +6,7 @@ class EmotionSeletionWidget extends StatefulWidget {
   final List<EmozioneData> emozioni;
   final EmozioneData? emozioneSelected;
 
-  const EmotionSeletionWidget({super.key, required this.emozioni, required this.onEmozioneSelected, EmozioneData? this.emozioneSelected});
+  const EmotionSeletionWidget({super.key, required this.emozioni, required this.onEmozioneSelected, this.emozioneSelected});
 
   @override
   State<EmotionSeletionWidget> createState() => _EmotionSeletionWidgetState();

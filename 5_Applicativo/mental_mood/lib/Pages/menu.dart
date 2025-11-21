@@ -9,7 +9,7 @@ import 'EmotionSelectionPage/emotion_selection_page.dart';
 class Menu extends StatelessWidget {
   final UtenteData? user;
 
-  const Menu({super.key, required UtenteData? this.user});
+  const Menu({super.key, required this.user});
 
 
   void _navigateToEmotionSelectionPage(BuildContext context) {

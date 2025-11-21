@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:mental_mood/Pages/UserSelectionPage/user_selection_page.dart';
 import 'package:provider/provider.dart';
 import 'package:mental_mood/Utils/database_util.dart';
 import 'DataBase/database.dart';
+import 'Pages/UserSelectionPage/user_selection_page.dart';
+import 'Utils/NotificationService.dart';
 
 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inizializza notifiche
+  NotificationService().initNotification();
 
   try {
     //Inizializzazione database...
@@ -24,6 +28,7 @@ void main() async {
         dispose: (_, AppDataBase db) => db.close(),
         child: const MaterialApp(
           debugShowCheckedModeBanner: false,
+          //home: UserSelectionPage(),
           home: UserSelectionPage(),
         ),
       ),

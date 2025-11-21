@@ -6,7 +6,7 @@ class MotivationSeletionWidget extends StatelessWidget {
   final List<MotivazioneData> motivazioni;
   final List<MotivazioneData?> motivazioniSelected;
 
-  const MotivationSeletionWidget({super.key, required this.motivazioni, required this.onMotivazioneSelected, required List<MotivazioneData?> this.motivazioniSelected});
+  const MotivationSeletionWidget({super.key, required this.motivazioni, required this.onMotivazioneSelected, required this.motivazioniSelected});
 
   @override
   Widget build(BuildContext context) {

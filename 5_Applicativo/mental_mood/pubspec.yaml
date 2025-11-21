@@ -30,26 +30,28 @@ environment:
 
 
 dependencies:
-  #others
-  liquid_glass_renderer: ^0.2.0-dev.2
-
   # dependencies for the database
-  drift: ^2.18.0 # Molto più recente
-  sqlite3_flutter_libs: ^0.5.40 # Molto più recente
-  path_provider: ^2.1.3 # Molto più recente
-  provider: ^6.1.2 # Molto più recente
-  path: ^1.9.0 # Molto più recente
+  drift: ^2.18.0
+  sqlite3_flutter_libs: ^0.5.40
+  path_provider: ^2.1.3
+  provider: ^6.1.2
+  path: ^1.9.0
 
   # dependencies for flutter
   flutter:
     sdk: flutter
-
   cupertino_icons: ^1.0.8
+
+  # other dependencies:
+  liquid_glass_renderer: ^0.2.0-dev.2
+  flutter_local_notifications: ^19.5.0
+  flutter_native_timezone: ^2.0.0
+  timezone: ^0.10.1
 
 dev_dependencies:
   # dev_dependencies for the database
-  drift_dev: ^2.18.0 # Deve corrispondere a drift
-  build_runner: ^2.4.6 # Molto più recente
+  drift_dev: ^2.18.0
+  build_runner: ^2.4.6
 
   # dev_dependencies for flutter
   flutter_test:
