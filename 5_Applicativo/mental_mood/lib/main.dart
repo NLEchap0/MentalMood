@@ -5,13 +5,11 @@ import 'DataBase/database.dart';
 import 'Pages/UserSelectionPage/user_selection_page.dart';
 import 'Utils/NotificationService.dart';
 
-
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Inizializza notifiche
-  NotificationService().initNotification();
+  await NotificationService().initNotification();
 
   try {
     //Inizializzazione database...
@@ -21,6 +19,7 @@ void main() async {
     DatabaseUtil dbUtil = DatabaseUtil();
     await dbUtil.populateDefaultEmotions(db);
     await dbUtil.populateDefaultMotivations(db);
+    await dbUtil.populateDefaultSuggestions(db);
 
     runApp(
       Provider(

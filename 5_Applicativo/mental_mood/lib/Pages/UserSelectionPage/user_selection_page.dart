@@ -5,6 +5,7 @@ import 'package:mental_mood/Pages/home_page.dart';
 import 'package:provider/provider.dart';
 
 import '../../DataBase/database.dart';
+import '../../Utils/notification_util.dart';
 
 class UserSelectionPage extends StatefulWidget {
   const UserSelectionPage({super.key});
@@ -31,6 +32,23 @@ class _UserSelectionPageState extends State<UserSelectionPage> {
       }
     } else {
       _selectedUser = utente;
+
+      try {
+        print("Tentativo di schedulazione notifiche per utente: ${utente.nome}");
+
+        // Qui passo 3 orari standard.
+        await NotificationUtil().scheduleIfEnabled(
+            dataBase,
+            utente,
+            const TimeOfDay(hour: 9, minute: 0),  // Notifica 1
+            const TimeOfDay(hour: 14, minute: 05), // Notifica 2
+            const TimeOfDay(hour: 21, minute: 0)  // Notifica 3
+        );
+      } catch (e) {
+        print("Errore nella schedulazione notifiche: $e");
+      }
+      if (!mounted) return;
+
       Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage(user: _selectedUser)));
     }
   }
@@ -45,40 +63,6 @@ class _UserSelectionPageState extends State<UserSelectionPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     dataBase = Provider.of<AppDataBase>(context);
-
-    // Forza il caricamento delle immagini nella cache
-    precacheImage(
-      const AssetImage('assets/images/bg.jpg'),
-      context,
-    );
-    precacheImage(
-      const AssetImage('assets/images/angry.jpg'),
-      context,
-    );
-    precacheImage(
-      const AssetImage('assets/images/anxious.jpg'),
-      context,
-    );
-    precacheImage(
-      const AssetImage('assets/images/happy.jpg'),
-      context,
-    );
-    precacheImage(
-      const AssetImage('assets/images/ok.jpg'),
-      context,
-    );
-    precacheImage(
-      const AssetImage('assets/images/sad.jpg'),
-      context,
-    );
-    precacheImage(
-      const AssetImage('assets/images/uncertain.jpg'),
-      context,
-    );
-    precacheImage(
-      const AssetImage('assets/images/unknown.jpg'),
-      context,
-    );
   }
 
   @override
@@ -95,6 +79,18 @@ class _UserSelectionPageState extends State<UserSelectionPage> {
         body:SingleChildScrollView(
           child: Column(
             children: [
+              ElevatedButton(
+                onPressed: () { _deleteUtenti(); },
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, color: Colors.red, size: 24,),
+                    Text(
+                        deleteUtenti ? "Termina eliminazioni" : "Elimina utenti",
+                      style: TextStyle(fontSize: 24),
+                    )
+                  ],
+                )
+              ),
               FutureBuilder<List<UtenteData>>(
                 future: _getUtenteFromDataBase(),
                 builder: (context, snapshot){
@@ -163,17 +159,6 @@ class _UserSelectionPageState extends State<UserSelectionPage> {
                   );
                 },
               ),
-              ElevatedButton(
-                onPressed: () { _deleteUtenti(); },
-                child: Row(
-                  children: [
-                    Icon(Icons.delete, color: Colors.red),
-                    Text(
-                      deleteUtenti ? "Termina eliminazioni" : "Elimina utenti"
-                    )
-                  ],
-                )
-              )
             ],
           ),
         )

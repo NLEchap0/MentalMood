@@ -9,9 +9,8 @@ class NotificationService {
   // Use a singleton pattern to ensure only one instance handles notifications
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
+  final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
   NotificationService._internal();
-
-  final notificationsPlugin = FlutterLocalNotificationsPlugin();
 
   bool _isInitialized = false;
 
@@ -19,12 +18,30 @@ class NotificationService {
 
   // METODO PER CONFIGURARE IL FUSO ORARIO LOCALE
   Future<void> _configureLocalTimeZone() async {
-    // Inizializza tutti i database di fusi orari
     tz.initializeTimeZones();
-    // Ottieni il nome del fuso orario locale del dispositivo
-    final String timeZoneName = await FlutterNativeTimezone.getLocalTimezone();
-    // Imposta il fuso orario locale per la programmazione
-    tz.setLocalLocation(tz.getLocation(timeZoneName));
+    try {
+      // Prova a prendere il fuso orario del dispositivo
+      final String timeZoneName = await FlutterNativeTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(timeZoneName));
+    } catch (e) {
+      // FALLBACK: Se fallisce, usa UTC o un fuso orario di default sicuro
+      print("Errore fuso orario, uso default UTC: $e");
+      tz.setLocalLocation(tz.getLocation('UTC'));
+    }
+  }
+
+  NotificationDetails _notificationDetails() {
+    return const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'daily_notification_channel',
+          'Promemoria Giornalieri',
+          channelDescription: 'Canale per i promemoria.',
+          importance: Importance.max,
+          priority: Priority.high,
+          ticker: 'ticker',
+        ),
+        iOS: DarwinNotificationDetails()
+    );
   }
 
   // INITIALIZE
@@ -52,24 +69,27 @@ class NotificationService {
     );
 
     // finally, initialize the plugin
-    await notificationsPlugin.initialize(initSettings);
+    await flutterLocalNotificationsPlugin.initialize(initSettings);
     _isInitialized = true;
+
+
+    const AndroidNotificationChannel androidChannel = AndroidNotificationChannel(
+      'daily_notification_channel',
+      'Promemoria Giornalieri',
+      description: 'Canale per i promemoria.',
+      importance: Importance.max,
+    );
+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(androidChannel);
+
+    flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
   }
 
-  // NOTIFICATIONS DETAIL SETUP - This method provides the required channel settings.
-  NotificationDetails notificationDetails() {
-    return const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'channel_id_1', // IMPORTANT: Use a unique ID here
-          'Notifiche Generiche',
-          channelDescription: 'Canale per le notifiche generiche dell\'app.',
-          importance: Importance.max,
-          priority: Priority.high,
-          // Optional: add sound, vibration settings if needed
-        ),
-        iOS: DarwinNotificationDetails()
-    );
-  }
+
 
   // SHOW NOTIFICATION (per notifica immediata)
   Future<void> showNotification({
@@ -77,8 +97,7 @@ class NotificationService {
     String? title,
     String? body,
   }) async {
-    // CRITICAL FIX: Use the configured notificationDetails() method
-    return notificationsPlugin.show(id, title, body, notificationDetails());
+    return flutterLocalNotificationsPlugin.show(id, title, body, _notificationDetails());
   }
 
   // ----------------------------------------------------------------------
@@ -109,24 +128,23 @@ class NotificationService {
     required int id,
     required String title,
     required String body,
-    required TimeOfDay time, // Orario in cui la notifica deve apparire (es. 9:00)
+    required TimeOfDay time,
   }) async {
-    // Rimuoviamo i parametri 'androidScheduleMode' e 'uiLocalNotificationDateInterpretation'
-    // per risolvere l'errore di compilazione sulla versione del pacchetto dell'utente.
-    await notificationsPlugin.zonedSchedule(
+    await flutterLocalNotificationsPlugin.zonedSchedule(
       id,
       title,
       body,
       _nextInstanceOfTime(time),
-      notificationDetails(),
+      _notificationDetails(),
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       // La notifica si ripete quotidianamente all'orario specificato
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
-      androidScheduleMode: AndroidScheduleMode.exact,
     );
   }
 
   // FUNZIONE PER ANNULLARE TUTTE LE NOTIFICHE PROGRAMMATE
   Future<void> cancelAllNotifications() async {
-    await notificationsPlugin.cancelAll();
+    await flutterLocalNotificationsPlugin.cancelAll();
   }
 }

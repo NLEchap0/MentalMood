@@ -7,6 +7,8 @@ import 'package:mental_mood/Utils/database_util.dart';
 import 'package:mental_mood/Utils/settings_util.dart';
 import 'package:provider/provider.dart';
 
+import '../UserSelectionPage/user_selection_page.dart';
+
 class UserSettingsPage extends StatefulWidget {
   final UtenteData? user;
   const UserSettingsPage({super.key, required this.user});
@@ -110,21 +112,7 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
-                    Text("Bentornato, ",style: TextStyle(color: Colors.black, fontSize: 67)),
-                    Text(
-                        widget.user!.nome,
-                        style: TextStyle(color: Colors.black, fontSize: 67)
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    Text("Bentornato, ",style: TextStyle(color: Colors.black, fontSize: 67)),
-                    Text(
-                        widget.user!.username,
+                    Text("Impostazioni",
                         style: TextStyle(color: Colors.black, fontSize: 67)
                     ),
                   ],
@@ -243,10 +231,17 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
                       ),
 
 
-
-
-                      Text("Cronologia: ${impostazioni.cronologia}", style: const TextStyle(fontSize: 30)),
-                      Text("Notifiche: ${impostazioni.notifiche ? 'Attive' : 'Disattive'}", style: const TextStyle(fontSize: 30)),
+                      ElevatedButton(
+                          onPressed: (){
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => UserSelectionPage(),
+                              ),
+                            );
+                          },
+                          child: Text("Cambia utente", style: const TextStyle(fontSize: 30))
+                      ),
                     ],
                   );
                 },

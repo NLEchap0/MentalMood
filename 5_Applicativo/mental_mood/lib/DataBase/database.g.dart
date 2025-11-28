@@ -801,6 +801,8 @@ class ConsiglioData extends DataClass implements Insertable<ConsiglioData> {
           other.testo == this.testo &&
           other.valoreIniziale == this.valoreIniziale &&
           other.valoreFinale == this.valoreFinale);
+
+  operator [](int other) {}
 }
 
 class ConsiglioCompanion extends UpdateCompanion<ConsiglioData> {

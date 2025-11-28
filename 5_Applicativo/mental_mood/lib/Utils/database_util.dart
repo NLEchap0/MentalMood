@@ -173,12 +173,144 @@ class DatabaseUtil {
         //Inserimento impostazioni predefinite
 
         await db.into(db.impostazione).insert(ImpostazioneCompanion.insert(
-            cronologia: 4,
-            notifiche: true,
+          cronologia: 4,
+          notifiche: true,
         ));
         print(
             '   - Inserito: Cronologia: 0, Notifiche: true all\'utente ${utente
                 .username}');
+      }
+    } catch (e) {
+      print('Errore durante il popolamento del database: $e');
+      rethrow;
+    }
+  }
+
+
+  Future<void> populateDefaultSuggestions(AppDataBase db) async {
+    try {
+      //Verifica consigli esistenti
+
+      final existingSuggestions = await db.getConsiglioList();
+      if (existingSuggestions.isEmpty) {
+        //Inserimento consigli predefiniti
+
+        await db.into(db.consiglio).insert(ConsiglioCompanion.insert(
+            testo: "Parla con una persona a te fidata di come ti senti, potrebbe aiutarti a superare questo momento difficile.",
+            valoreIniziale: 0,
+            valoreFinale: 2
+        ));
+        print(
+            "   - Inserito: Consiglio"
+        );
+
+        await db.into(db.consiglio).insert(ConsiglioCompanion.insert(
+            testo: "Se ti può aiutare, prova ad andare in un luogo che ti porta calma e ascolta musica rilassante.",
+            valoreIniziale: 0,
+            valoreFinale: 2
+        ));
+        print(
+            "   - Inserito: Consiglio"
+        );
+
+        await db.into(db.consiglio).insert(ConsiglioCompanion.insert(
+            testo: "Impegnati a fare un'attività che stai procrastinando, ti aiuterà a sentirti utile.",
+            valoreIniziale: 3,
+            valoreFinale: 4
+        ));
+        print(
+            "   - Inserito: Consiglio"
+        );
+
+        await db.into(db.consiglio).insert(ConsiglioCompanion.insert(
+            testo: "Se ti senti sopraffatto, nota 5 cose che puoi vedere, 4 che puoi toccare, 3 che puoi sentire, 2 che puoi annusare e 1 che puoi gustare.",
+            valoreIniziale: 3,
+            valoreFinale: 4
+        ));
+        print(
+            "   - Inserito: Consiglio"
+        );
+
+        await db.into(db.consiglio).insert(ConsiglioCompanion.insert(
+            testo: "Pianifica qualcosa che ti fa piacere fare, come guardare una serie TV o altro.",
+            valoreIniziale: 3,
+            valoreFinale: 4
+        ));
+        print(
+            "   - Inserito: Consiglio"
+        );
+
+        await db.into(db.consiglio).insert(ConsiglioCompanion.insert(
+            testo: "Pensa e annota ciò per cui sei grato oggi.",
+            valoreIniziale: 5,
+            valoreFinale: 6
+        ));
+        print(
+            "   - Inserito: Consiglio"
+        );
+
+        await db.into(db.consiglio).insert(ConsiglioCompanion.insert(
+            testo: "Impegnati in un'attività che ti assorbe completamente, come un hobby, un puzzle, o suonare uno strumento.",
+            valoreIniziale: 5,
+            valoreFinale: 6
+        ));
+        print(
+            "   - Inserito: Consiglio"
+        );
+
+        await db.into(db.consiglio).insert(ConsiglioCompanion.insert(
+            testo: "Fai una piccola cosa per rendere più facile il tuo risveglio o la giornata domani.",
+            valoreIniziale: 5,
+            valoreFinale: 6
+        ));
+        print(
+            "   - Inserito: Consiglio"
+        );
+
+        await db.into(db.consiglio).insert(ConsiglioCompanion.insert(
+            testo: "Chiama un amico o un familiare e racconta loro perché sei felice.",
+            valoreIniziale: 7,
+            valoreFinale: 8
+        ));
+        print(
+            "   - Inserito: Consiglio"
+        );
+
+        await db.into(db.consiglio).insert(ConsiglioCompanion.insert(
+            testo: "Usa la tua energia positiva per fare qualcosa di gentile per qualcun altro, come offrire aiuto, fare un complimento, ecc.",
+            valoreIniziale: 7,
+            valoreFinale: 8
+        ));
+        print(
+            "   - Inserito: Consiglio"
+        );
+
+        await db.into(db.consiglio).insert(ConsiglioCompanion.insert(
+            testo: "Smetti di pensare al futuro o a cosa farai dopo e immergiti completamente nel presente.",
+            valoreIniziale: 9,
+            valoreFinale: 10
+        ));
+        print(
+            "   - Inserito: Consiglio"
+        );
+
+        await db.into(db.consiglio).insert(ConsiglioCompanion.insert(
+            testo: "Usa l'ondata di energia per avviare o progredire significativamente in un obiettivo importante.",
+            valoreIniziale: 9,
+            valoreFinale: 10
+        ));
+        print(
+            "   - Inserito: Consiglio"
+        );
+
+        await db.into(db.consiglio).insert(ConsiglioCompanion.insert(
+            testo: "Assicurati di rimanere ancorato alle tue esigenze di base: non saltare un pasto, dormi a sufficienza.",
+            valoreIniziale: 9,
+            valoreFinale: 10
+        ));
+        print(
+            "   - Inserito: Consiglio"
+        );
       }
     } catch (e) {
       print('Errore durante il popolamento del database: $e');

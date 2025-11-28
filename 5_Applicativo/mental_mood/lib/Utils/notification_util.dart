@@ -4,9 +4,13 @@ import 'NotificationService.dart';
 
 class NotificationUtil {
   // Funzione che contiene la logica condizionale di scheduling
-  void scheduleIfEnabled(AppDataBase db, UtenteData? utente, TimeOfDay dailyNotificationTime, TimeOfDay dailyNotificationTime2, TimeOfDay dailyNotificationTime3) async {
+  Future<void> scheduleIfEnabled(AppDataBase db, UtenteData? utente, TimeOfDay dailyNotificationTime, TimeOfDay dailyNotificationTime2, TimeOfDay dailyNotificationTime3) async {
     if (utente?.id == null) return;
     final idUtente = utente!.id;
+
+    if (!NotificationService().isInitialized) {
+      await NotificationService().initNotification();
+    }
 
     final List<ImpostazioneData> impostazioniList = await db.getImpostazioni(idUtente);
 
@@ -16,6 +20,9 @@ class NotificationUtil {
       final impostazione = impostazioniList.first;
       isNotificationEnabled = impostazione.notifiche;
     }
+
+    print("DEBUG NOTIFICHE - Utente: $idUtente");
+    print("DEBUG NOTIFICHE - Impostazioni trovate: ${impostazioniList.length}");
 
     if (isNotificationEnabled) {
       // 3. Se abilitato, programma la notifica

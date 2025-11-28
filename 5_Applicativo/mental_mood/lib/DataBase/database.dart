@@ -36,7 +36,7 @@ class Motivazione extends Table{ //the motivation table of the database
 }
 
 class Impostazione extends Table{ //the settings table of the database
-  IntColumn get cronologia => integer()(); //the cronology of the settings
+  IntColumn get cronologia => integer()(); //the chronology of the settings
   BoolColumn get notifiche => boolean()(); //the notifications of the settings
   IntColumn get utenteId => integer().references(Utente, #id)(); //the id of the user
   @override
@@ -166,8 +166,23 @@ class AppDataBase extends _$AppDataBase{
     ).get();
   }
 
+  Future<EmozioneData> getEmozioneByName(String nomeEmozione) {
+    return (
+      select(emozione)
+        ..where((e) => e.nome.equals(nomeEmozione))
+      ).getSingle();
+  }
+
   Future<void> updateImpostazioni(ImpostazioneCompanion entry) {
     return (update(impostazione)..where((t) => t.utenteId.equals(entry.utenteId.value))).write(entry);
+  }
+
+  Future<int> deleteOldEmozioniRegistrate(int days) async {
+    final limitDate = DateTime.now().subtract(Duration(days: days));
+
+    return await (delete(emozioneRegistrata)
+      ..where((t) => t.dataRegistrazione.isSmallerThanValue(limitDate))
+    ).go();
   }
 }
 
