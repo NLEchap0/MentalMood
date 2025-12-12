@@ -54,97 +54,137 @@ class _UserSelectionPageState extends State<UserSelectionPage> {
     return Scaffold(
         backgroundColor: Colors.yellow[200],
         appBar: AppBar(
-          title: const Text("Seleziona un utente da utilizzare"),
-          backgroundColor: Colors.orangeAccent,
-          elevation: 4,
+          title: const Text("Seleziona un utente"),
+          elevation: 10,
+          backgroundColor: Colors.white,
+          shadowColor: Colors.black,
         ),
-        body:SingleChildScrollView(
-          child: Column(
-            children: [
-              ElevatedButton(
-                onPressed: () { _deleteUtenti(); },
-                child: Row(
-                  children: [
-                    Icon(Icons.delete, color: Colors.red, size: 24,),
-                    Text(
-                        deleteUtenti ? "Termina eliminazioni" : "Elimina utenti",
-                      style: TextStyle(fontSize: 24),
-                    )
-                  ],
-                )
-              ),
-              FutureBuilder<List<UtenteData>>(
-                future: _getUtenteFromDataBase(),
-                builder: (context, snapshot){
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.error, size: 64, color: Colors.red),
-                          Text(
-                            "Errore nel caricamento:",
-                            style: TextStyle(fontSize: 20),
-                          ),
-                          Text(
-                            "\"${snapshot.error}\"",
-                            style: TextStyle(fontSize: 20),
-                          ),
-                          Text(
-                            "Riprova più tardi",
-                            style: TextStyle(fontSize: 20),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.add_circle, color: Colors.black, size: 208),
-                            onPressed: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => const UserAddPage()));
-                            },)
-                        ],
-                      ),
-                    );
-                  }
-
-                  // Se tutto è ok, mostra la lista degli utenti
-                  final utenti = snapshot.data!;
-                  return SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        // Passiamo la lista di dati PRONTA e la callback
-                        UserSeletionWidget(
-                          utenti: utenti,
-                          onUtenteSelected: _handleUserSelection,
-                          deleteUtenti: deleteUtenti,
-                        ),
-                        IconButton(icon: const Icon(Icons.add_circle, color: Colors.black, size: 208),
+        body:LayoutBuilder(
+          builder:(context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight
+                ),
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage("assets/images/bg.jpg"),
+                        fit: BoxFit.cover,
+                      )
+                  ),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(25.0),
+                        child: ElevatedButton(
                           onPressed: () {
-                           Navigator.push(
-                               context,
-                               MaterialPageRoute(
-                                   builder: (context) => const UserAddPage()
-                               )
-                           ).then((_) {
-                             setState(() {});
-                           });
+                            _deleteUtenti();
+                          },
+                          child: Row(
+                            spacing: 10,
+                            children: [
+                              Icon(Icons.delete, color: Colors.red, size: 24,),
+                              Text(
+                                deleteUtenti
+                                    ? "Disattiva modalità elimina"
+                                    : "Attiva modalità elimina",
+                                style: TextStyle(fontSize: 24),
+                              )
+                            ],
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red[200],
+                            foregroundColor: Colors.red,
+                            minimumSize: Size(450, 60),
+                            elevation: 10,
+                            side: BorderSide(color: Colors.red, width: 2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                        ),
+                      ),
+                      FutureBuilder<List<UtenteData>>(
+                        future: _getUtenteFromDataBase(),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.error, size: 64, color: Colors.red),
+                                Text(
+                                  "Errore nel caricamento:",
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                                Text(
+                                  "\"${snapshot.error}\"",
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                                Text(
+                                  "Riprova più tardi",
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                              ],
+                            );
+                          }
+                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(
+                                        Icons.add_circle, color: Colors.black,
+                                        size: 208),
+                                    onPressed: () {
+                                      Navigator.push(context, MaterialPageRoute(
+                                          builder: (
+                                              context) => const UserAddPage()));
+                                    },)
+                                ],
+                              ),
+                            );
+                          }
+
+                          // Se tutto è ok, mostra la lista degli utenti
+                          final utenti = snapshot.data!;
+                          return Column(
+                            children: [
+                              // Passiamo la lista di dati PRONTA e la callback
+                              UserSeletionWidget(
+                                utenti: utenti,
+                                onUtenteSelected: _handleUserSelection,
+                                deleteUtenti: deleteUtenti,
+                              ),
+                              IconButton(icon: const Icon(
+                                  Icons.add_circle, color: Colors.black,
+                                  size: 208),
+                                onPressed: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (
+                                              context) => const UserAddPage()
+                                      )
+                                  ).then((_) {
+                                    setState(() {});
+                                  });
+                                },
+                              ),
+                            ],
+                          );
                           },
                         ),
                       ],
                     ),
-                  );
-                },
-              ),
-            ],
+                  ),
+                ),
+              );
+            },
           ),
-        )
-    );
+      );
   }
 
   Future<List<UtenteData>> _getUtenteFromDataBase() async {

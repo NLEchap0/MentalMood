@@ -23,48 +23,52 @@ Widget listUsersUI(List<UtenteData> listUsers, ValueChanged<UtenteData> onUtente
     itemCount: listUsers.length,
     itemBuilder: (context, index) {
       UtenteData utente = listUsers[index];
-      return Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8.0),
-          border: Border.all(color: Colors.black, width: 2.0),
-        ),
-        child: InkWell(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 50,
-                children: [
-                  deleteUtenti
-                  ?
-                  Container(
-                    width: 200,
-                    height: 200,
-                    color: Colors.black,
-                    child:
-                    Icon(Icons.delete, size: 60, color: Colors.red,),
-                  )
-                  :
-                  CircleAvatar(
-                    radius: 100,
-                    backgroundColor: Colors.black,
-                    child: Text(
-                      utente.username[0],
-                      style: TextStyle(fontSize: 60, color: Colors.white),
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8.0),
+            border: Border.all(color: Colors.black, width: 2.0),
+          ),
+          child: InkWell(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  spacing: 50,
+                  children: [
+                    deleteUtenti
+                    ?
+                    CircleAvatar(
+                      radius: 100,
+                      backgroundColor: Colors.black,
+                      child:
+                      Icon(Icons.delete_forever, size: 60, color: Colors.red,),
+                    )
+                    :
+                    CircleAvatar(
+                      radius: 100,
+                      backgroundColor: Colors.black,
+                      child: Text(
+                        utente.username[0],
+                        style: TextStyle(fontSize: 60, color: Colors.white),
+                      ),
                     ),
-                  ),
-                  Text(
-                    utente.nome,
-                    style: const TextStyle(fontSize: 40),
-                  ),
-                ],
+                    Text(
+                      utente.nome.length > 18
+                          ? '${utente.nome.substring(0, 18)}...'
+                          : utente.nome,
+                      style: const TextStyle(fontSize: 40),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            onTap: () async{
-              onUtenteSelected(utente);
-              //final db = AppDataBase();
-              //await db.deleteUser(utente.id);
-            },
+              onTap: () async{
+                onUtenteSelected(utente);
+                //final db = AppDataBase();
+                //await db.deleteUser(utente.id);
+              },
+          ),
         ),
       );
     },

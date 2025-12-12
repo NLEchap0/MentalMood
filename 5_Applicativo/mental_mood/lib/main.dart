@@ -5,13 +5,14 @@ import 'DataBase/database.dart';
 import 'Pages/UserSelectionPage/user_selection_page.dart';
 
 void main() async {
+  //Assicura inizializzazione di FlutterBinding (necessario per Provider)
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    //Inizializzazione database...
+    //Inizializzazione database
     final db = AppDataBase();
 
-    //Popolamento emozioni predefinite
+    //Popolamento predefiniti: emozioni, motivazioni, consigli
     DatabaseUtil dbUtil = DatabaseUtil();
     await dbUtil.populateDefaultEmotions(db);
     await dbUtil.populateDefaultMotivations(db);
@@ -22,9 +23,8 @@ void main() async {
         create: (_) => db,
         dispose: (_, AppDataBase db) => db.close(),
         child: const MaterialApp(
-          debugShowCheckedModeBanner: false,
-          //home: UserSelectionPage(),
-          home: UserSelectionPage(),
+          debugShowCheckedModeBanner: false, // Toglie il banner di debug in fase di sviluppo
+          home: UserSelectionPage(), // Fa visualizzare la pagina di selezione dell'utente
         ),
       ),
     );

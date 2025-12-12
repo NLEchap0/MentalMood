@@ -7,7 +7,7 @@ import 'dart:convert';
 part 'database.g.dart';
 
 
-// Questo convertitore gestisce la trasformazione tra List<String> e String JSON
+// Questo convertitore gestisce la trasformazione tra List<String> e String JSON -- Creato tramite Gemini
 class StringListConverter extends TypeConverter<List<String>, String> {
   // Converte List<String> in String (per il salvataggio nel DB)
   @override
@@ -29,42 +29,42 @@ class StringListConverter extends TypeConverter<List<String>, String> {
   }
 }
 
-class Motivazione extends Table{ //the motivation table of the database
-  TextColumn get testo => text()(); //the text of the motivation
+class Motivazione extends Table{ // La tabella delle motivazioni
+  TextColumn get testo => text()(); // Il testo della motivazione
   @override
   Set<Column> get primaryKey => {testo};
 }
 
-class Impostazione extends Table{ //the settings table of the database
-  IntColumn get cronologia => integer()(); //the chronology of the settings
-  IntColumn get utenteId => integer().references(Utente, #id)(); //the id of the user
+class Impostazione extends Table{ // La tabella delle impostazioni dell'utente
+  IntColumn get cronologia => integer()(); // Il numero di giorni della cronologia da mantenere salvato
+  IntColumn get utenteId => integer().references(Utente, #id)(); // L'id dell'utente a cui sono state associate le impostazioni
   @override
   Set<Column> get primaryKey => {utenteId};
 }
 
-class Emozione extends Table{ //the emotion table of the database
-  TextColumn get nome => text()(); //the name value of the emotion
-  TextColumn get imgPath => text()(); //the path of the image of the emotion
-  IntColumn get valore => integer()(); //the value of the emotion
+class Emozione extends Table{ // La tabella delle emozioni
+  TextColumn get nome => text()(); // Il nome dell'emozione
+  TextColumn get imgPath => text()(); // Il path dell'immagine dell'emozione
+  IntColumn get valore => integer()(); // Il valore assegnato all'emozione
   @override
   Set<Column> get primaryKey => {nome};
 }
 
-class Utente extends Table{ //the user table of the database
-  IntColumn get id => integer().autoIncrement()(); //the id of the user
-  TextColumn get username=> text()(); //the username of the user
-  TextColumn get nome => text()(); //the name of the user
-  DateTimeColumn get dataNascita => dateTime()(); //the date of birth of the user
+class Utente extends Table{ // La tabella degli utenti
+  IntColumn get id => integer().autoIncrement()(); // L'id dell'utente
+  TextColumn get username=> text()(); // Lo username dell'utente
+  TextColumn get nome => text()(); // Il nome dell'utente
+  DateTimeColumn get dataNascita => dateTime()(); // La data di nascita dell'utente
 }
 
-class Consiglio extends Table{ //the advice table of the database
-  IntColumn get id => integer().autoIncrement()(); //the id of the advice
-  TextColumn get testo => text()(); //the content of the advice
-  IntColumn get valoreIniziale => integer()(); //the initial value of the advice
-  IntColumn get valoreFinale => integer()(); //the final value of the advice
+class Consiglio extends Table{ // La tabella dei consigli
+  IntColumn get id => integer().autoIncrement()(); // L'id del consiglio
+  TextColumn get testo => text()(); // Il testo del consiglio
+  IntColumn get valoreIniziale => integer()(); // Il valore iniziale del consiglio
+  IntColumn get valoreFinale => integer()(); // Il valore finale del consiglio
 }
 
-// Join table of Emozione, Utente & Motivazione, with the date of registration
+// Una tabella di associazione tra Emozione, Utente e Motivazione.
 class EmozioneRegistrata extends Table {
   IntColumn get utenteId => integer().references(Utente, #id)();
   TextColumn get emozioneNome => text().references(Emozione, #nome)();
@@ -111,6 +111,8 @@ class AppDataBase extends _$AppDataBase{
       },
     );
   }
+
+  /* TUTTE LE QUERY QUA SCRITTE (A PARTE QUELLE CREATE DI DEFAULT) SONO STATE GENERATE TRAMITE GEMINI, POI RIVISIONATE*/
 
   // Get all the emotions from DB
   Future<List<EmozioneData>> getEmozioneList() async{

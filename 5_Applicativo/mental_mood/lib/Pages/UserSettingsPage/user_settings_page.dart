@@ -146,6 +146,9 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
                                   value: _selectedCronologiaValue,
                                   onChanged: (newValue){
                                     _updateCronologia(dataBase, newValue);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Impostazioni di cronologia salvate con successo!'), backgroundColor: Colors.green),
+                                    );
                                   },
                                   items: cronologiaItems.map((String selezione){
                                     return DropdownMenuItem<String>(
@@ -161,7 +164,12 @@ class _UserSettingsPageState extends State<UserSettingsPage> {
                       Padding(
                         padding: const EdgeInsets.all(30),
                         child: ElevatedButton(
-                          onPressed: () { dataBase.deleteOldEmozioniRegistrate(0); },
+                          onPressed: () {
+                            dataBase.deleteOldEmozioniRegistrate(0);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Dati eliminati con successo!'), backgroundColor: Colors.green),
+                            );
+                          },
                           child: Text(
                             "Elimina dati emozioni registrate",
                             style: TextStyle(fontSize: 30),
