@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../DataBase/database.dart';
 import '../UserSelectionPage/user_selection_page.dart';
 
+/* LOGICA PAGINA QUASI TOTALMENTE CREATA ASSISTITA DALL'UTILIZZO DI GEMINI, POI RIVISIONATA */
 class UserAddPage extends StatefulWidget {
   const UserAddPage({super.key});
 

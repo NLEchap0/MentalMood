@@ -44,6 +44,73 @@ class _EmotionSelectionPageState extends State<EmotionSelectionPage> {
     });
   }
 
+  void _registraStatoAnimo() async {
+    if (_selectedEmozione == null || widget.user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Seleziona un\'emozione!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final List<String> motivazioniTestoList = _selectedMotivazioni.map((m) => m.testo).toList();
+
+    final EmozioneRegistrataCompanion entry = EmozioneRegistrataCompanion(
+      utenteId: Value(widget.user!.id),
+      emozioneNome: Value(_selectedEmozione!.nome),
+      motivazioneTesto: Value(motivazioniTestoList),
+      dataRegistrazione: Value(DateTime.now()),
+    );
+
+    try {
+      await dataBase.insertEmozioneRegistrata(entry);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Stato d\'animo registrato con successo!'), backgroundColor: Colors.green),
+      );
+      setState(() {
+        _selectedEmozione = null;
+        _selectedMotivazioni = [];
+      });
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomePage(user: widget.user),
+        ),
+      );
+    } catch (e) {
+      print('Errore durante la registrazione: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Errore di salvataggio: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<List<EmozioneData>> _getEmozioneFromDataBase() async {
+    try {
+      // Recupero emozioni dal database
+      final result = await dataBase.getEmozioneList();
+      // Emozioni recuperate
+      return result;
+    } catch (e) {
+      print('Errore nel recupero emozioni: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<MotivazioneData>> _getMotivazioneFromDataBase() async{
+    try {
+      // Recupero emozioni dal database
+      final result = await dataBase.getMotivazioneList();
+      // Emozioni recuperate
+      return result;
+    } catch (e) {
+      print('Errore nel recupero emozioni: $e');
+      rethrow;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     dataBase = Provider.of<AppDataBase>(context);
@@ -252,73 +319,6 @@ class _EmotionSelectionPageState extends State<EmotionSelectionPage> {
         )
       )
     );
-  }
-
-  void _registraStatoAnimo() async {
-    if (_selectedEmozione == null || widget.user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Seleziona un\'emozione!'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final List<String> motivazioniTestoList = _selectedMotivazioni.map((m) => m.testo).toList();
-
-    final EmozioneRegistrataCompanion entry = EmozioneRegistrataCompanion(
-      utenteId: Value(widget.user!.id),
-      emozioneNome: Value(_selectedEmozione!.nome),
-      motivazioneTesto: Value(motivazioniTestoList),
-      dataRegistrazione: Value(DateTime.now()),
-    );
-
-    try {
-      await dataBase.insertEmozioneRegistrata(entry);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Stato d\'animo registrato con successo!'), backgroundColor: Colors.green),
-      );
-      setState(() {
-        _selectedEmozione = null;
-        _selectedMotivazioni = [];
-      });
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomePage(user: widget.user),
-        ),
-      );
-    } catch (e) {
-      print('Errore durante la registrazione: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Errore di salvataggio: $e'), backgroundColor: Colors.red),
-      );
-    }
-  }
-
-  Future<List<EmozioneData>> _getEmozioneFromDataBase() async {
-    try {
-      // Recupero emozioni dal database
-      final result = await dataBase.getEmozioneList();
-      // Emozioni recuperate
-      return result;
-    } catch (e) {
-      print('Errore nel recupero emozioni: $e');
-      rethrow;
-    }
-  }
-
-  Future<List<MotivazioneData>> _getMotivazioneFromDataBase() async{
-    try {
-      // Recupero emozioni dal database
-      final result = await dataBase.getMotivazioneList();
-      // Emozioni recuperate
-      return result;
-    } catch (e) {
-      print('Errore nel recupero emozioni: $e');
-      rethrow;
-    }
   }
 }
 

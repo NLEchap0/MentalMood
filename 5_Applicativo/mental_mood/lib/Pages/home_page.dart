@@ -18,6 +18,7 @@ class _HomePageState extends State<HomePage> {
 
   @override void initState() {
     super.initState();
+    // Non appena il WidgetsBinding è pronto, esegui il check e il setState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndDeleteOldStorage();
       setState(() {});
@@ -84,18 +85,15 @@ class _HomePageState extends State<HomePage> {
     for (var emozione in emozioniValide) {
       sommaValori += emozione.valore;
     }
-
     double media = 0;
     if (emozioniValide.isNotEmpty) {
       media = sommaValori / emozioniValide.length;
     }
-
     for (var i = 0; i < consigli.length; i++) {
       if(media >= consigli[i].valoreIniziale && media <= consigli[i].valoreFinale){
         consigliValidi.add(consigli[i]);
       }
     }
-
     final random = Random();
     int numeroRandom = random.nextInt(consigliValidi.length);
 

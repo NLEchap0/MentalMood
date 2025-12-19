@@ -49,7 +49,6 @@ class _UserSelectionPageState extends State<UserSelectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    //dataBase = Provider.of<AppDataBase>(context);
 
     return Scaffold(
         backgroundColor: Colors.yellow[200],
@@ -189,9 +188,9 @@ class _UserSelectionPageState extends State<UserSelectionPage> {
 
   Future<List<UtenteData>> _getUtenteFromDataBase() async {
     try {
-      // Recupero emozioni dal database
+      // Recupero utenti dal database
       final result = await dataBase.getUtenteList();
-      // Emozioni recuperate
+      // Utenti recuperati corretto, quindi passo il risultato alla callback
       return result;
     } catch (e) {
       print('Errore nel recupero emozioni: $e');

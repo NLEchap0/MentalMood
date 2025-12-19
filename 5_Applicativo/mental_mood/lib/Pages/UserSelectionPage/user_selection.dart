@@ -65,8 +65,6 @@ Widget listUsersUI(List<UtenteData> listUsers, ValueChanged<UtenteData> onUtente
               ),
               onTap: () async{
                 onUtenteSelected(utente);
-                //final db = AppDataBase();
-                //await db.deleteUser(utente.id);
               },
           ),
         ),
