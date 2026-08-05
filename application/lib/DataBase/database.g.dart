@@ -829,7 +829,7 @@ class $MoodTagTable extends MoodTag with TableInfo<$MoodTagTable, MoodTagData> {
     false,
     additionalChecks: GeneratedColumn.checkTextLength(
       minTextLength: 1,
-      maxTextLength: 5,
+      maxTextLength: 30,
     ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,

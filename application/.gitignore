@@ -27,11 +27,18 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
 /coverage/
+
+# Database files (Drift/SQLite)
+*.sqlite
+*.db
+*.db-shm
+*.db-wal
 
 # Symbolication related
 app.*.symbols

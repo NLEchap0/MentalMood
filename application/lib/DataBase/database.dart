@@ -28,7 +28,7 @@ class Emotion extends Table {
 class MoodTag extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get label => text().withLength(min: 1, max: 20)();
-  TextColumn get emoji => text().withLength(min: 1, max: 5)();
+  TextColumn get emoji => text().withLength(min: 1, max: 30)();
   IntColumn get userId => integer().nullable().references(User, #id, onDelete: KeyAction.cascade)(); // null means global/default
 }
 
@@ -90,8 +90,11 @@ class AppDataBase extends _$AppDataBase {
         await m.createAll();
       },
       onUpgrade: (m, from, to) async {
-        if (from < 2) await m.createTable(emotion);
-        if (from < 3) {
+        if (from < 2) {
+          await m.createTable(emotion);
+        } else if (from < 3) {
+          // Add columns only if we are coming from a version that didn't have them
+          // and the table was already created in its old state.
           await m.addColumn(emotion, emotion.note);
           await m.addColumn(emotion, emotion.tags);
         }
