@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:application/Utils/theme.dart';
 import 'package:flutter/material.dart';
 
 enum BreathPhase { ready, inhale, hold, exhale }
@@ -95,110 +94,138 @@ class _ZenModePageState extends State<ZenModePage> with SingleTickerProviderStat
         width: double.infinity,
         decoration: BoxDecoration(
           gradient: RadialGradient(
-            colors: [color.withOpacity(0.08), theme.scaffoldBackgroundColor],
-            center: Alignment.center, radius: 1.2,
+            colors: [
+              color.withValues(alpha: 0.15), 
+              theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
+              theme.scaffoldBackgroundColor
+            ],
+            center: Alignment.center, radius: 1.4,
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.close_rounded, color: theme.colorScheme.onSurface.withOpacity(0.3)), 
-                      onPressed: () => Navigator.pop(context)
-                    ),
-                    const Spacer(),
-                    Text(
-                      "PANIC BUTTON", 
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900, 
-                        letterSpacing: 3, 
-                        fontSize: 10, 
-                        color: theme.colorScheme.onSurface.withOpacity(0.2)
-                      )
-                    ),
-                    const Spacer(),
-                    const SizedBox(width: 48),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: 320, height: 320,
-                    child: CircularProgressIndicator(
-                      value: _progress, 
-                      strokeWidth: 4, 
-                      color: color.withOpacity(0.3), 
-                      backgroundColor: Colors.transparent
-                    ),
-                  ),
-                  AnimatedBuilder(
-                    animation: _sizeAnimation,
-                    builder: (context, child) => Container(
-                      width: 260 * _sizeAnimation.value, height: 260 * _sizeAnimation.value,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: color.withOpacity(0.15),
-                        boxShadow: [
-                          BoxShadow(color: color.withOpacity(0.2), blurRadius: 60, spreadRadius: 5)
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          _phase == BreathPhase.ready ? "READY" : _phase.name.toUpperCase(),
-                          style: TextStyle(color: color, fontWeight: FontWeight.w900, letterSpacing: 4, fontSize: 18),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.close_rounded, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)), 
+                                onPressed: () => Navigator.pop(context)
+                              ),
+                              const Spacer(),
+                              Text(
+                                "PANIC BUTTON", 
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                                  letterSpacing: 4
+                                )
+                              ),
+                              const Spacer(),
+                              const SizedBox(width: 48),
+                            ],
+                          ),
                         ),
-                      ),
+                        const Spacer(),
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SizedBox(
+                              width: 320, height: 320,
+                              child: CircularProgressIndicator(
+                                value: _progress, 
+                                strokeWidth: 6, 
+                                color: color.withValues(alpha: 0.4), 
+                                backgroundColor: Colors.transparent
+                              ),
+                            ),
+                            AnimatedBuilder(
+                              animation: _sizeAnimation,
+                              builder: (context, child) => Container(
+                                width: 260 * _sizeAnimation.value, height: 260 * _sizeAnimation.value,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: color.withValues(alpha: 0.2),
+                                  boxShadow: [
+                                    BoxShadow(color: color.withValues(alpha: 0.25), blurRadius: 80, spreadRadius: 5)
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    _phase == BreathPhase.ready ? "READY" : _phase.name.toUpperCase(),
+                                    style: TextStyle(color: color, fontWeight: FontWeight.w900, letterSpacing: 4, fontSize: 20),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 48),
+                          child: Text(
+                            _instruction, 
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: theme.colorScheme.onSurface, 
+                              height: 1.4,
+                              fontSize: 22
+                            )
+                          ),
+                        ),
+                        const Spacer(),
+                        if (_phase == BreathPhase.ready)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(32, 0, 32, 40),
+                            child: ElevatedButton(
+                              onPressed: _start,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.error,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 24),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+                                elevation: 8,
+                                shadowColor: theme.colorScheme.error.withValues(alpha: 0.5),
+                              ),
+                              child: const Text(
+                                "I NEED SUPPORT NOW", 
+                                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1),
+                              ),
+                            ),
+                          )
+                        else
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 40),
+                            child: TextButton(
+                              onPressed: () => setState(() {
+                                _phase = BreathPhase.ready;
+                                _instruction = "Find a quiet space and settle in.";
+                                _progress = 0;
+                                _controller.stop();
+                              }), 
+                              child: Text(
+                                "STOP SESSION", 
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1
+                                )
+                              )
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 80),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 48),
-                child: Text(
-                  _instruction, 
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.4), height: 1.5)
                 ),
-              ),
-              const Spacer(),
-              if (_phase == BreathPhase.ready)
-                Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: ElevatedButton(
-                    onPressed: _start,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.error,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 24),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-                      elevation: 4,
-                    ),
-                    child: const Text(
-                      "I NEED SUPPORT NOW", 
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1),
-                    ),
-                  ),
-                )
-              else
-                TextButton(
-                  onPressed: () => setState(() {
-                    _phase = BreathPhase.ready;
-                    _instruction = "Taking a break is okay.";
-                    _progress = 0;
-                    _controller.stop();
-                  }), 
-                  child: Text("STOP SESSION", style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.3), fontWeight: FontWeight.bold))
-                ),
-              const SizedBox(height: 40),
-            ],
+              );
+            },
           ),
         ),
       ),

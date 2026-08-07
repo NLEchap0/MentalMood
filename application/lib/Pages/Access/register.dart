@@ -30,125 +30,104 @@ class _RegisterState extends State<Register> {
       birthDate: _selectedDate,
     );
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Journey started! Please log in."), behavior: SnackBarBehavior.floating)
-      );
       Navigator.pop(context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final controller = context.watch<RegisterController>();
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text("New Journey"),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32.0),
-          physics: const BouncingScrollPhysics(),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Start Your Journey", style: theme.textTheme.displayLarge?.copyWith(fontSize: 32)),
-                const SizedBox(height: 8),
-                Text(
-                  "Begin tracking your mindful growth today.", 
-                  style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.4), fontSize: 16)
-                ),
-                const SizedBox(height: 48),
-                TextFormField(
-                  controller: _usernameController,
-                  decoration: const InputDecoration(labelText: "Username", prefixIcon: Icon(Icons.person_outline_rounded)),
-                  validator: (v) => (v == null || v.isEmpty) ? "Required" : null,
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(labelText: "Name"),
-                        validator: (v) => (v == null || v.isEmpty) ? "Required" : null,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _surnameController,
-                        decoration: const InputDecoration(labelText: "Surname"),
-                        validator: (v) => (v == null || v.isEmpty) ? "Required" : null,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                InkWell(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context, 
-                      initialDate: _selectedDate, 
-                      firstDate: DateTime(1900), 
-                      lastDate: DateTime.now(),
-                      builder: (context, child) => Theme(
-                        data: theme.copyWith(
-                          colorScheme: theme.colorScheme.copyWith(primary: AppTheme.sagePrimary),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(title: const Text("New Journey")),
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(32.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Create Account", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -1)),
+                  const SizedBox(height: 8),
+                  const Text("Start your mindful journaling.", style: TextStyle(color: Colors.white54, fontSize: 16)),
+                  const SizedBox(height: 48),
+                  TextFormField(
+                    controller: _usernameController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(labelText: "Username", prefixIcon: Icon(Icons.person_outline_rounded, color: Colors.white54)),
+                    validator: (v) => (v == null || v.isEmpty) ? "Required" : null,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _nameController,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: const InputDecoration(labelText: "Name"),
+                          validator: (v) => (v == null || v.isEmpty) ? "Required" : null,
                         ),
-                        child: child!,
                       ),
-                    );
-                    if (picked != null) setState(() => _selectedDate = picked);
-                  },
-                  borderRadius: BorderRadius.circular(24),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: theme.colorScheme.onSurface.withOpacity(0.05)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.cake_rounded, color: theme.colorScheme.onSurface.withOpacity(0.3), size: 20),
-                        const SizedBox(width: 12),
-                        Text(DateFormat.yMMMMd().format(_selectedDate), style: const TextStyle(fontSize: 16)),
-                        const Spacer(),
-                        Text("Birth Date", style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 12)),
-                      ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _surnameController,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: const InputDecoration(labelText: "Surname"),
+                          validator: (v) => (v == null || v.isEmpty) ? "Required" : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context, initialDate: _selectedDate, firstDate: DateTime(1900), lastDate: DateTime.now(),
+                      );
+                      if (picked != null) setState(() => _selectedDate = picked);
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    mouseCursor: SystemMouseCursors.click,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(20)),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.cake_rounded, color: Colors.white54, size: 20),
+                          const SizedBox(width: 12),
+                          Text(DateFormat('dd/MM/yyyy').format(_selectedDate), style: const TextStyle(fontSize: 16, color: Colors.white)),
+                          const Spacer(),
+                          const Text("Birth Date", style: TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold, fontSize: 11)),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: "Password", prefixIcon: Icon(Icons.lock_outline_rounded)),
-                  validator: (v) => (v == null || v.length < 4) ? "At least 4 characters" : null,
-                ),
-                if (controller.errorMessage != null) ...[
-                  const SizedBox(height: 24),
-                  Text(
-                    controller.errorMessage!, 
-                    style: TextStyle(color: theme.colorScheme.error, fontWeight: FontWeight.bold)
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(labelText: "Password", prefixIcon: Icon(Icons.lock_outline_rounded, color: Colors.white54)),
+                    validator: (v) => (v == null || v.length < 4) ? "Too short" : null,
+                  ),
+                  if (controller.errorMessage != null) ...[
+                    const SizedBox(height: 24),
+                    Text(controller.errorMessage!, style: const TextStyle(color: AppTheme.terracottaError, fontWeight: FontWeight.bold)),
+                  ],
+                  const SizedBox(height: 48),
+                  ElevatedButton(
+                    onPressed: controller.isLoading ? null : _handleRegister,
+                    child: controller.isLoading 
+                      ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2)) 
+                      : const Text("CREATE ACCOUNT"),
                   ),
                 ],
-                const SizedBox(height: 48),
-                ElevatedButton(
-                  onPressed: controller.isLoading ? null : _handleRegister,
-                  child: controller.isLoading 
-                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
-                    : const Text("CREATE MY ACCOUNT"),
-                ),
-                const SizedBox(height: 40),
-              ],
+              ),
             ),
           ),
         ),

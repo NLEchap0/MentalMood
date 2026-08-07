@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:application/Logic/login_controller.dart';
 import 'package:application/Logic/mood_controller.dart';
 import 'package:application/Utils/animations.dart';
@@ -18,6 +19,7 @@ class _SettingsPageState extends State<SettingsPage> {
   late TextEditingController _nameController;
   late TextEditingController _surnameController;
   late DateTime _selectedDate;
+  bool _isProcessing = false;
 
   @override
   void initState() {
@@ -35,358 +37,311 @@ class _SettingsPageState extends State<SettingsPage> {
     super.dispose();
   }
 
-  void _handleUpdate() async {
+  Future<void> _handleUpdate() async {
     if (!_formKey.currentState!.validate()) return;
+    setState(() => _isProcessing = true);
     final controller = context.read<LoginController>();
-    final success = await controller.updateProfile(
-      name: _nameController.text, surname: _surnameController.text, birthDate: _selectedDate,
+    await controller.updateProfile(
+      name: _nameController.text.trim(), 
+      surname: _surnameController.text.trim(), 
+      birthDate: _selectedDate
     );
-    if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated successfully'), behavior: SnackBarBehavior.floating));
+    if (mounted) {
+      setState(() => _isProcessing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile updated.'), behavior: SnackBarBehavior.floating)
+      );
     }
+  }
+
+  Future<void> _confirmAction({
+    required String title,
+    required String message,
+    required Future<void> Function() onConfirm,
+    bool isDestructive = false,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDestructive ? AppTheme.terracottaError : AppTheme.accent,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text("Confirm"),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) await onConfirm();
   }
 
   @override
   Widget build(BuildContext context) {
     final user = context.watch<LoginController>().currentUser;
     if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text("Profile"),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        physics: const BouncingScrollPhysics(),
-        clipBehavior: Clip.none, // Ensure hover scale doesn't get cut at the edges
-        child: Column(
-          children: [
-            // User Persona Card
-            FadeInSlide(
-              duration: 400,
-              direction: const Offset(0, -20),
-              child: Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  borderRadius: BorderRadius.circular(40),
-                  boxShadow: [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.2), blurRadius: 30, offset: const Offset(0, 10))],
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Colors.white.withOpacity(0.2),
-                      child: Text(user.name[0].toUpperCase(), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white)),
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(title: const Text("Profile")),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              children: [
+                FadeInSlide(
+                  child: _GlassCard(
+                    padding: const EdgeInsets.all(32),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 35, 
+                          backgroundColor: Colors.white.withValues(alpha: 0.1), 
+                          child: Text(user.name[0].toUpperCase(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white))
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("${user.name} ${user.surname}", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                              const Text("App Member", style: TextStyle(color: Colors.white38, fontSize: 13)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("${user.name} ${user.surname}", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-                          Text("Personal Journaling Member", style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13)),
-                        ],
+                  ),
+                ),
+                const SizedBox(height: 48),
+                _buildLabel("Personal Info"),
+                const SizedBox(height: 12),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _nameController, 
+                        decoration: const InputDecoration(labelText: "Name"), 
+                        style: const TextStyle(color: Colors.white),
+                        validator: (v) => (v == null || v.isEmpty) ? "Required" : null,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 48),
-            
-            _buildSectionHeader("Personal Information"),
-            const SizedBox(height: 16),
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  FadeInSlide(
-                    duration: 500,
-                    child: TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(labelText: "First Name"),
-                      validator: (v) => (v == null || v.isEmpty) ? "Required" : null,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  FadeInSlide(
-                    duration: 600,
-                    child: TextFormField(
-                      controller: _surnameController,
-                      decoration: const InputDecoration(labelText: "Last Name"),
-                      validator: (v) => (v == null || v.isEmpty) ? "Required" : null,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  FadeInSlide(
-                    duration: 700,
-                    child: HoverEffect(
-                      scale: 1.01,
-                      child: InkWell(
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _surnameController, 
+                        decoration: const InputDecoration(labelText: "Surname"), 
+                        style: const TextStyle(color: Colors.white),
+                        validator: (v) => (v == null || v.isEmpty) ? "Required" : null,
+                      ),
+                      const SizedBox(height: 16),
+                      InkWell(
                         onTap: () async {
                           final p = await showDatePicker(context: context, initialDate: _selectedDate, firstDate: DateTime(1900), lastDate: DateTime.now());
                           if (p != null) setState(() => _selectedDate = p);
                         },
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(18),
+                        mouseCursor: SystemMouseCursors.click,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface,
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: theme.colorScheme.onSurface.withOpacity(0.05)),
-                          ),
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(18)),
                           child: Row(
                             children: [
-                              Icon(Icons.cake_rounded, color: theme.colorScheme.onSurface.withOpacity(0.3), size: 20),
+                              const Icon(Icons.cake_rounded, color: Colors.white54, size: 20),
                               const SizedBox(width: 12),
-                              Text(DateFormat.yMMMMd().format(_selectedDate), style: const TextStyle(fontSize: 16)),
+                              Text(DateFormat('dd/MM/yyyy').format(_selectedDate), style: const TextStyle(color: Colors.white, fontSize: 16)),
                               const Spacer(),
-                              const Text("Edit", style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.sagePrimary)),
+                              const Text("Change", style: TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold, fontSize: 12)),
                             ],
                           ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 32),
+                      ElevatedButton(onPressed: _handleUpdate, child: const Text("SAVE CHANGES")),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  FadeInSlide(
-                    duration: 800,
-                    child: ElevatedButton(onPressed: _handleUpdate, child: const Text("SAVE CHANGES")),
+                ),
+                const SizedBox(height: 56),
+                _buildLabel("Journal Management"),
+                const SizedBox(height: 12),
+                _GlassCard(
+                  child: Column(
+                    children: [
+                      _Tile(
+                        title: "Generate Mock Data", 
+                        icon: Icons.storage_rounded, 
+                        color: Colors.amber, 
+                        onTap: () => _confirmAction(
+                          title: "Seed Data?",
+                          message: "Add random entries for testing.",
+                          onConfirm: () async {
+                            setState(() => _isProcessing = true);
+                            await context.read<MoodController>().seedMockData(user.id);
+                            setState(() => _isProcessing = false);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Mock data generated."), behavior: SnackBarBehavior.floating)
+                              );
+                            }
+                          }
+                        )
+                      ),
+                      const Divider(height: 1, indent: 64, color: Colors.white10),
+                      _Tile(
+                        title: "Cleanup History", 
+                        icon: Icons.history_rounded, 
+                        color: AppTheme.sagePrimary, 
+                        onTap: () async {
+                          final date = await showDatePicker(context: context, initialDate: DateTime.now().subtract(const Duration(days: 30)), firstDate: DateTime(1900), lastDate: DateTime.now());
+                          if (date != null) {
+                            await _confirmAction(
+                              title: "Delete Entries?",
+                              message: "Delete logs before ${DateFormat('dd/MM/yyyy').format(date)}?",
+                              isDestructive: true,
+                              onConfirm: () async {
+                                await context.read<MoodController>().clearHistoryBefore(user.id, date);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Selected history cleared."), behavior: SnackBarBehavior.floating)
+                                  );
+                                }
+                              }
+                            );
+                          }
+                        }
+                      ),
+                      const Divider(height: 1, indent: 64, color: Colors.white10),
+                      _Tile(
+                        title: "Wipe All Data",
+                        icon: Icons.delete_sweep_rounded,
+                        color: AppTheme.terracottaError,
+                        onTap: () => _confirmAction(
+                          title: "Clear Journal?",
+                          message: "Every entry will be deleted permanently.",
+                          isDestructive: true,
+                          onConfirm: () async {
+                            await context.read<MoodController>().clearHistory(user.id);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Journal wiped clean."), behavior: SnackBarBehavior.floating)
+                              );
+                            }
+                          }
+                        )
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 56),
-            
-            _buildSectionHeader("Safe Zone"),
-            const SizedBox(height: 16),
-            FadeInSlide(
-              duration: 900,
-              child: HoverEffect(
-                scale: 1.01,
-                child: _SettingsTile(
-                  title: "Generate Sample Data",
-                  desc: "Seed your journal for testing",
-                  icon: Icons.auto_awesome_rounded,
-                  color: Colors.amber,
-                  onTap: () async {
-                    await context.read<MoodController>().seedMockData(user.id);
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Mock data generated! (60 days)"), behavior: SnackBarBehavior.floating),
-                      );
-                    }
-                  },
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            FadeInSlide(
-              duration: 1000,
-              child: HoverEffect(
-                scale: 1.01,
-                child: _SettingsTile(
-                  title: "Cleanup Journal",
-                  desc: "Remove older memories",
-                  icon: Icons.history_rounded,
-                  color: AppTheme.oliveSecondary,
-                  onTap: () => _selectRetentionDate(user.id),
+                const SizedBox(height: 48),
+                _buildLabel("Account", isDanger: true),
+                const SizedBox(height: 12),
+                _GlassCard(
+                  child: Column(
+                    children: [
+                      _Tile(
+                        title: "Logout", 
+                        icon: Icons.logout_rounded, 
+                        color: Colors.white54, 
+                        onTap: () => _confirmAction(
+                          title: "Sign Out?",
+                          message: "Log out from your account?",
+                          onConfirm: () async {
+                            await context.read<LoginController>().logout();
+                            if (mounted) Navigator.pushReplacementNamed(context, '/login');
+                          }
+                        )
+                      ),
+                      const Divider(height: 1, indent: 64, color: Colors.white10),
+                      _Tile(
+                        title: "Delete Account", 
+                        icon: Icons.person_remove_rounded, 
+                        color: AppTheme.terracottaError, 
+                        onTap: () => _confirmAction(
+                          title: "Delete Forever?",
+                          message: "This will erase your account and all data. Irreversible.",
+                          isDestructive: true,
+                          onConfirm: () async {
+                            setState(() => _isProcessing = true);
+                            await context.read<LoginController>().deleteAccount();
+                            if (mounted) Navigator.pushReplacementNamed(context, '/login');
+                          }
+                        )
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                const SizedBox(height: 160),
+              ],
             ),
-            const SizedBox(height: 12),
-            FadeInSlide(
-              duration: 1100,
-              child: HoverEffect(
-                scale: 1.01,
-                child: _SettingsTile(
-                  title: "Export Journal",
-                  desc: "Download your data as CSV",
-                  icon: Icons.ios_share_rounded,
-                  color: AppTheme.indigoPrimary,
-                  onTap: () {}, // Future impl
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 56),
-
-            _buildSectionHeader("Account"),
-            const SizedBox(height: 16),
-            FadeInSlide(
-              duration: 1200,
-              child: HoverEffect(
-                scale: 1.01,
-                child: _SettingsTile(
-                  title: "Logout",
-                  desc: "Sign out from this device",
-                  icon: Icons.logout_rounded,
-                  color: theme.colorScheme.primary,
-                  onTap: _confirmLogout,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 48),
-            
-            _buildSectionHeader("Danger Zone", isDanger: true),
-            const SizedBox(height: 16),
-            FadeInSlide(
-              duration: 1300,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.terracottaError.withOpacity(0.03),
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(color: AppTheme.terracottaError.withOpacity(0.1)),
-                ),
-                child: Column(
-                  children: [
-                    _SettingsTile(
-                      title: "Wipe All Memories",
-                      desc: "Irreversible deletion of all logs",
-                      icon: Icons.delete_sweep_rounded,
-                      color: AppTheme.terracottaError,
-                      onTap: () => _confirmDeleteAll(user.id),
-                    ),
-                    const Divider(indent: 64, endIndent: 20, height: 1),
-                    _SettingsTile(
-                      title: "Delete My Account",
-                      desc: "Close your mindful journey forever",
-                      icon: Icons.person_remove_rounded,
-                      color: AppTheme.terracottaError,
-                      onTap: () => _confirmDeleteAccount(),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 100),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title, {bool isDanger = false}) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        title.toUpperCase(),
-        style: TextStyle(
-          fontWeight: FontWeight.w800,
-          letterSpacing: 2,
-          fontSize: 11,
-          color: isDanger ? AppTheme.terracottaError : Colors.grey.shade400,
-        ),
-      ),
-    );
-  }
-
-  void _confirmLogout() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: const Text("Sign Out?"),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true), 
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text("Logout"),
           ),
-        ],
-      ),
-    );
-    if (confirm == true && mounted) {
-      await context.read<LoginController>().logout();
-      if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-      }
-    }
-  }
-
-  void _confirmDeleteAccount() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: const Text("Delete account?"),
-        content: const Text("This will erase everything you've ever tracked."),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Keep it")),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.terracottaError,
-              foregroundColor: Colors.white,
+        ),
+        if (_isProcessing)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.6),
+              child: const Center(child: CircularProgressIndicator()),
             ),
-            child: const Text("Delete Permanently"),
           ),
-        ],
-      ),
+      ],
     );
-    if (confirm == true && mounted) {
-      await context.read<LoginController>().deleteAccount();
-      if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-      }
-    }
   }
 
-  void _confirmDeleteAll(int userId) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: const Text("Wipe journal?"),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Yes, Wipe All", style: TextStyle(color: AppTheme.terracottaError))),
-        ],
-      ),
-    );
-    if (confirm == true) await context.read<MoodController>().clearHistory(userId);
-  }
-
-  void _selectRetentionDate(int userId) async {
-    final date = await showDatePicker(context: context, initialDate: DateTime.now().subtract(const Duration(days: 30)), firstDate: DateTime(1900), lastDate: DateTime.now());
-    if (date != null) await context.read<MoodController>().clearHistoryBefore(userId, date);
-  }
+  Widget _buildLabel(String t, {bool isDanger = false}) => Align(
+    alignment: Alignment.centerLeft, 
+    child: Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(t.toUpperCase(), style: TextStyle(fontWeight: FontWeight.w900, color: isDanger ? AppTheme.terracottaError : Colors.white24, letterSpacing: 1.5, fontSize: 11))
+    )
+  );
 }
 
-class _SettingsTile extends StatelessWidget {
+class _Tile extends StatelessWidget {
   final String title;
-  final String desc;
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  const _SettingsTile({required this.title, required this.desc, required this.icon, required this.color, required this.onTap});
-
+  const _Tile({required this.title, required this.icon, required this.color, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return ListTile(
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
-        child: Icon(icon, color: color, size: 22),
+      leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle), child: Icon(icon, color: color, size: 20)),
+      title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+      trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white10, size: 18),
+    );
+  }
+}
+
+class _GlassCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  const _GlassCard({required this.child, this.padding});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: ShapeDecoration(
+        shape: ContinuousRectangleBorder(
+          borderRadius: BorderRadius.circular(56),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.08), width: 1.2),
+        ),
       ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-      subtitle: Text(desc, style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withOpacity(0.4))),
-      trailing: Icon(Icons.chevron_right_rounded, size: 18, color: theme.colorScheme.onSurface.withOpacity(0.1)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          width: double.infinity,
+          padding: padding,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.05),
+          ),
+          child: child,
+        ),
+      ),
     );
   }
 }
