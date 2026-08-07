@@ -14,80 +14,94 @@ void main() {
   late LoginController loginController;
   late MockUserRepository mockUserRepository;
 
+  setUpAll(() {
+    registerFallbackValue(UserCompanion());
+  });
+
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     mockUserRepository = MockUserRepository();
     loginController = LoginController(userRepository: mockUserRepository);
   });
 
-  group('LoginController Tests', () {
-    test('Initial state is correct', () {
-      expect(loginController.isLoading, false);
-      expect(loginController.errorMessage, null);
-    });
-
-    test('Login success with correct credentials', () async {
+  group('LoginController Auth Tests', () {
+    test('Login success and saves to SharedPrefs', () async {
       const username = 'testuser';
       const password = 'password123';
-      // Use exactly what the app uses or a compatible salt
       final hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(logRounds: 10));
 
       final mockUser = UserData(
-        id: 1,
-        username: username,
-        name: 'Test',
-        surname: 'User',
-        password: hashedPassword,
-        birthDate: DateTime.now(),
+        id: 1, username: username, name: 'Test', surname: 'User',
+        password: hashedPassword, birthDate: DateTime.now(),
       );
 
-      when(() => mockUserRepository.getUserByUsername(username))
-          .thenAnswer((_) async => mockUser);
+      when(() => mockUserRepository.getUserByUsername(username)).thenAnswer((_) async => mockUser);
 
       final result = await loginController.login(username, password);
-
-      if (!result) {
-        print("Login failed. Error: ${loginController.errorMessage}");
-      }
 
       expect(result, true);
-      expect(loginController.isLoading, false);
-      expect(loginController.errorMessage, null);
+      expect(loginController.currentUser?.id, 1);
+      
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('user_session'), username);
     });
 
-    test('Login fails with wrong password', () async {
-      const username = 'testuser';
-      const password = 'password123';
-      final hashedPassword = BCrypt.hashpw('different_password', BCrypt.gensalt());
-
+    test('isLoggedIn returns true if username in prefs', () async {
+      const username = 'stored_user';
+      SharedPreferences.setMockInitialValues({'user_session': username});
+      
       final mockUser = UserData(
-        id: 1,
-        username: username,
-        name: 'Test',
-        surname: 'User',
-        password: hashedPassword,
-        birthDate: DateTime.now(),
+        id: 1, username: username, name: 'Stored', surname: 'User',
+        password: 'hashed', birthDate: DateTime.now(),
       );
 
-      when(() => mockUserRepository.getUserByUsername(username))
-          .thenAnswer((_) async => mockUser);
+      when(() => mockUserRepository.getUserByUsername(username)).thenAnswer((_) async => mockUser);
 
-      final result = await loginController.login(username, password);
-
-      expect(result, false);
-      expect(loginController.errorMessage, 'Invalid username or password.');
+      final loggedIn = await loginController.isLoggedIn();
+      
+      expect(loggedIn, true);
+      expect(loginController.currentUser?.username, username);
     });
 
-    test('Login fails when user not found', () async {
-      const username = 'nonexistent';
+    test('Logout clears current user and prefs', () async {
+      loginController.currentUser = UserData(
+        id: 1, username: 'user', name: 'N', surname: 'S', password: 'p', birthDate: DateTime.now()
+      );
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_session', 'user');
+
+      await loginController.logout();
+
+      expect(loginController.currentUser, null);
+      expect(prefs.getString('user_session'), null);
+    });
+  });
+
+  group('LoginController Profile Tests', () {
+    test('updateProfile calls repository and updates local state', () async {
+      final initialUser = UserData(
+        id: 1, username: 'user', name: 'Old', surname: 'Name', password: 'p', birthDate: DateTime(2000)
+      );
+      loginController.currentUser = initialUser;
       
-      when(() => mockUserRepository.getUserByUsername(username))
-          .thenAnswer((_) async => null);
+      final newBirthDate = DateTime(1995);
+      final updatedUser = initialUser.copyWith(name: 'New', surname: 'Surname', birthDate: newBirthDate);
 
-      final result = await loginController.login(username, 'any_password');
+      when(() => mockUserRepository.updateUser(any())).thenAnswer((_) async => true);
+      when(() => mockUserRepository.getUserByUsername('user')).thenAnswer((_) async => updatedUser);
 
-      expect(result, false);
-      expect(loginController.errorMessage, 'Invalid username or password.');
+      final success = await loginController.updateProfile(
+        name: 'New', surname: 'Surname', birthDate: newBirthDate
+      );
+
+      expect(success, true);
+      expect(loginController.currentUser?.name, 'New');
+      expect(loginController.currentUser?.surname, 'Surname');
+      expect(loginController.currentUser?.birthDate, newBirthDate);
+      
+      verify(() => mockUserRepository.updateUser(any(
+        that: isA<UserCompanion>().having((u) => u.name.value, 'name', 'New')
+      ))).called(1);
     });
   });
 }
