@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
@@ -33,11 +34,11 @@ class AIService {
         final data = jsonDecode(response.body);
         return data['choices'][0]['message']['content'];
       } else {
-        print('AI Error: ${response.statusCode} - ${response.body}');
+        debugPrint('AI Error: ${response.statusCode} - ${response.body}');
         return null;
       }
     } catch (e) {
-      print('AI Exception: $e');
+      debugPrint('AI Exception: $e');
       return null;
     }
   }

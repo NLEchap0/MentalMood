@@ -1,7 +1,6 @@
 import 'package:application/DataBase/database.dart';
 import 'package:application/Repositories/user_repository.dart';
 import 'package:bcrypt/bcrypt.dart';
-import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 
 class RegisterController extends ChangeNotifier {

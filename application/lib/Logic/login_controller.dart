@@ -19,6 +19,7 @@ class LoginController extends ChangeNotifier {
 
   UserData? _currentUser;
   UserData? get currentUser => _currentUser;
+  set currentUser(UserData? user) => _currentUser = user;
 
   /// Handles the login process and saves the session if successful
   Future<bool> login(String username, String password) async {
