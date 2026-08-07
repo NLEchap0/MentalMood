@@ -18,7 +18,7 @@ class User extends Table {
 
 class Emotion extends Table {
   IntColumn get id => integer().autoIncrement()();
-  IntColumn get value => integer().check(value.isBetweenValues(1, 10))();
+  IntColumn get value => integer().customConstraint('CHECK (value >= 1 AND value <= 10)')();
   IntColumn get userId => integer().references(User, #id, onDelete: KeyAction.cascade)();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   TextColumn get note => text().nullable()();
@@ -45,7 +45,7 @@ class Badge extends Table {
 @DriftDatabase(tables: [User, Emotion, MoodTag, Badge])
 class AppDataBase extends _$AppDataBase {
   AppDataBase() : super(_openConnection());
-  AppDataBase.forTesting(QueryExecutor e) : super(e);
+  AppDataBase.forTesting(super.e);
 
   @override
   int get schemaVersion => 5;
@@ -106,14 +106,14 @@ class AppDataBase extends _$AppDataBase {
         final tags = await select(moodTag).get();
         if (tags.isEmpty) {
           final defaultTags = [
-            {'label': 'Work', 'emoji': '💼'},
-            {'label': 'Sport', 'emoji': '🏃‍♂️'},
-            {'label': 'Food', 'emoji': '🍎'},
-            {'label': 'Sleep', 'emoji': '😴'},
-            {'label': 'Family', 'emoji': '👨‍👩‍👧'},
-            {'label': 'Friends', 'emoji': '🤝'},
-            {'label': 'Hobby', 'emoji': '🎨'},
-            {'label': 'Weather', 'emoji': '☀️'},
+            {'label': 'Work', 'emoji': 'work'},
+            {'label': 'Sport', 'emoji': 'sport'},
+            {'label': 'Food', 'emoji': 'food'},
+            {'label': 'Sleep', 'emoji': 'sleep'},
+            {'label': 'Family', 'emoji': 'family'},
+            {'label': 'Friends', 'emoji': 'friends'},
+            {'label': 'Hobby', 'emoji': 'hobby'},
+            {'label': 'Weather', 'emoji': 'weather'},
           ];
           for (var tag in defaultTags) {
             await into(moodTag).insert(MoodTagCompanion.insert(
