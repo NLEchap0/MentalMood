@@ -16,16 +16,16 @@ import 'package:application/Repositories/user_repository.dart';
 import 'package:application/Utils/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'dart:io';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  Intl.defaultLocale = Platform.localeName;
-  await initializeDateFormatting();
+  Intl.defaultLocale = 'en_GB'; // Force English with European-style dates
+  await initializeDateFormatting('en_GB', null);
 
   final db = AppDataBase();
   final userRepository = DriftUserRepository(db);
@@ -46,9 +46,15 @@ void main() async {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
+        theme: AppTheme.theme,
+        themeMode: ThemeMode.dark, // Force a single, premium dark experience
+        locale: const Locale('en', 'GB'),
+        supportedLocales: const [Locale('en', 'GB')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         home: loggedIn ? const MainNavigationContainer() : const Login(),
         routes: {
           '/login': (context) => const Login(),
