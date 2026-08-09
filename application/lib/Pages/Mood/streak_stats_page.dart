@@ -43,6 +43,6 @@ class _MetricPill extends StatelessWidget {
   const _MetricPill({required this.label, required this.value, required this.icon, required this.color});
   @override
   Widget build(BuildContext context) {
-    return Expanded(child: GlassCard(padding: const EdgeInsets.symmetric(vertical: 20), child: Column(children: [Icon(icon, color: color, size: 20), const SizedBox(height: 8), Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white)), Text(label.toUpperCase(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white24))])));
+    return Expanded(child: GlassCard(padding: const EdgeInsets.symmetric(vertical: 20), child: Column(children: [Icon(icon, color: color, size: 20), const SizedBox(height: 8), Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white)), const SizedBox(height: 2), Text(label.toUpperCase(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white30, letterSpacing: 0.8))])));
   }
 }

@@ -69,6 +69,7 @@ class _AddMoodPageState extends State<AddMoodPage> {
                       const SizedBox(height: 48),
                       Slider(
                         value: _currentValue, min: 1, max: 10, divisions: 18,
+                        activeColor: stateColor,
                         onChanged: (v) => setState(() => _currentValue = v),
                       ),
                     ],

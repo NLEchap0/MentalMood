@@ -110,7 +110,7 @@ class _HomePageState extends State<HomePage> {
                         padding: const EdgeInsets.fromLTRB(0, 32, 24, 12),
                         height: 300,
                         child: chartData.isEmpty 
-                          ? const Center(child: Text("Synchronizing system data...", style: TextStyle(color: Colors.white24))) 
+                          ? _ChartEmptyState(hasAnyData: moodController.moodHistory.isNotEmpty) 
                           : _LineChartWidget(data: chartData, range: moodController.selectedRange),
                       ),
                     ),
@@ -127,27 +127,10 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     const SizedBox(height: 40),
-                    _buildSectionHeader("System Insight"),
-                    const SizedBox(height: 16),
-                    FadeInSlide(
-                      delay: 200,
-                      child: GlassCard(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(children: [const Icon(Icons.psychology_rounded, color: AppTheme.accent, size: 20), const SizedBox(width: 12), Text("NEURAL ANALYSIS", style: theme.textTheme.labelSmall?.copyWith(color: AppTheme.accent))]),
-                            const SizedBox(height: 16),
-                            Text(moodController.getMoodSummary(), style: const TextStyle(color: Colors.white70, fontSize: 15, height: 1.6, fontWeight: FontWeight.w500)),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 40),
                     _buildSectionHeader("Recent Activity"),
                     const SizedBox(height: 16),
                     if (moodController.moodHistory.isEmpty)
-                      const Center(child: Text("Zero activity recorded.", style: TextStyle(color: Colors.white10)))
+                      const Center(child: Text("Zero activity recorded.", style: TextStyle(color: Colors.white24)))
                     else
                       ...moodController.moodHistory.take(2).map((entry) => Padding(padding: const EdgeInsets.only(bottom: 12), child: _buildRecentLogTile(context, entry))),
                     const SizedBox(height: 140), 
@@ -173,7 +156,7 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 12),
             Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white)),
             const SizedBox(height: 4),
-            Text(label.toUpperCase(), style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.white24, letterSpacing: 1)),
+            Text(label.toUpperCase(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white30, letterSpacing: 0.8)),
           ],
         ),
       ),
@@ -254,6 +237,35 @@ class _RangeSelector extends StatelessWidget {
   String _label(MoodRange r) => r == MoodRange.last24h ? "24h" : r == MoodRange.last7d ? "7d" : "30d";
 }
 
+class _ChartEmptyState extends StatelessWidget {
+  final bool hasAnyData;
+  const _ChartEmptyState({required this.hasAnyData});
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = hasAnyData ? Icons.filter_alt_off_rounded : Icons.bubble_chart_rounded;
+    final title = hasAnyData ? "NO SIGNAL IN RANGE" : "NO DATA YET";
+    final subtitle = hasAnyData
+        ? "No states recorded in this window. Try a wider range."
+        : "Log your first check-in to start the neural drift.";
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 48, color: Colors.white.withValues(alpha: 0.15)),
+          const SizedBox(height: 20),
+          Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 2, color: Colors.white38)),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.white30, height: 1.5)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _LineChartWidget extends StatefulWidget {
   final List<ChartMoodPoint> data;
   final MoodRange range;
@@ -295,14 +307,14 @@ class _LineChartWidgetState extends State<_LineChartWidget> {
       LineChartData(
         minY: 0, maxY: 11,
         extraLinesData: ExtraLinesData(horizontalLines: [
-          HorizontalLine(y: 5.5, color: Colors.white.withValues(alpha: 0.1), strokeWidth: 1, dashArray: [10, 5], label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, padding: const EdgeInsets.only(right: 10, bottom: 2), style: const TextStyle(fontSize: 8, color: Colors.white24, fontWeight: FontWeight.w900, letterSpacing: 1), labelResolver: (_) => 'STABILITY')),
+          HorizontalLine(y: 5.5, color: Colors.white.withValues(alpha: 0.1), strokeWidth: 1, dashArray: [10, 5], label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, padding: const EdgeInsets.only(right: 10, bottom: 2), style: const TextStyle(fontSize: 9, color: Colors.white30, fontWeight: FontWeight.w900, letterSpacing: 1), labelResolver: (_) => 'STABILITY')),
         ]),
         gridData: const FlGridData(show: false),
         titlesData: FlTitlesData(
           leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 60, interval: 2, getTitlesWidget: (value, meta) {
             String label = '';
             if (value == 1) label = 'DORMANT'; else if (value == 3) label = 'PULSE'; else if (value == 5) label = 'STASIS'; else if (value == 7) label = 'ACTIVE'; else if (value == 9) label = 'VIBRANT';
-            return SideTitleWidget(meta: meta, child: Text(label, textAlign: TextAlign.right, style: const TextStyle(fontSize: 8, color: Colors.white24, fontWeight: FontWeight.w900, letterSpacing: 1)));
+            return SideTitleWidget(meta: meta, child: Text(label, textAlign: TextAlign.right, style: const TextStyle(fontSize: 9, color: Colors.white30, fontWeight: FontWeight.w900, letterSpacing: 0.5)));
           })),
           topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -314,7 +326,7 @@ class _LineChartWidgetState extends State<_LineChartWidget> {
             if (index != 0 && index != data.length - 1 && (index % step != 0 || index > data.length - step * 0.8)) return const SizedBox.shrink();
             final date = data[index].date;
             String format = range == MoodRange.last24h ? 'HH:mm' : 'dd/MM/yyyy';
-            return SideTitleWidget(meta: meta, space: 14, child: Text(DateFormat(format).format(date), style: const TextStyle(fontSize: 8, color: Colors.white24, fontWeight: FontWeight.w900)));
+            return SideTitleWidget(meta: meta, space: 14, child: Text(DateFormat(format).format(date), style: const TextStyle(fontSize: 9, color: Colors.white30, fontWeight: FontWeight.w900)));
           })),
         ),
         borderData: FlBorderData(show: false),
@@ -345,7 +357,7 @@ class _LineChartWidgetState extends State<_LineChartWidget> {
             shadow: Shadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4)),
             gradient: LinearGradient(colors: fullColors, stops: List.generate(12, (i) { final minY = data.map((e) => e.value).reduce(min); double range = maxYData - minY; return range <= 0.1 ? i / 11.0 : ((i.toDouble() - minY) / range).clamp(0.0, 1.0); }), begin: Alignment.bottomCenter, end: Alignment.topCenter),
             dotData: FlDotData(show: data.length < 15, getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(radius: 4, color: Colors.white, strokeWidth: 2.5, strokeColor: AppTheme.getSmoothColor(spot.y))),
-            belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: fullColors.map((c) => c.withValues(alpha: c == const Color(0xFF00D2FF) ? 0.08 : 0.25)).toList(), stops: List.generate(12, (i) => (i.toDouble() / max(maxYData, 1.0)).clamp(0.0, 1.0)), begin: Alignment.bottomCenter, end: Alignment.topCenter)),
+            belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [AppTheme.getSmoothColor(maxYData).withValues(alpha: 0.22), Colors.transparent], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:application/Utils/theme.dart';
 import 'package:flutter/material.dart';
 
 enum BreathPhase { ready, inhale, hold, exhale }
@@ -73,37 +74,37 @@ class _ZenModePageState extends State<ZenModePage> with SingleTickerProviderStat
     });
   }
 
-  Color _getPhaseColor(ThemeData theme) {
+  Color _getPhaseColor() {
     switch (_phase) {
-      case BreathPhase.inhale: return theme.colorScheme.primary;
-      case BreathPhase.hold: return Colors.purpleAccent;
-      case BreathPhase.exhale: return theme.colorScheme.secondary;
-      default: return theme.colorScheme.error;
+      case BreathPhase.ready: return AppTheme.accent;
+      case BreathPhase.inhale: return AppTheme.sagePrimary;
+      case BreathPhase.hold: return AppTheme.accent;
+      case BreathPhase.exhale: return AppTheme.amberWarm;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = _getPhaseColor(theme);
+    final color = _getPhaseColor();
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: AnimatedContainer(
-        duration: const Duration(seconds: 1),
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            colors: [
-              color.withValues(alpha: 0.15), 
-              theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
-              theme.scaffoldBackgroundColor
-            ],
-            center: Alignment.center, radius: 1.4,
+      backgroundColor: AppTheme.backgroundBase,
+      body: Stack(
+        children: [
+          Container(decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient)),
+          AnimatedContainer(
+            duration: const Duration(seconds: 1),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                colors: [color.withValues(alpha: 0.14), Colors.transparent],
+                center: Alignment.center, radius: 1.2,
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: LayoutBuilder(
+          SafeArea(
+            child: LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -228,6 +229,7 @@ class _ZenModePageState extends State<ZenModePage> with SingleTickerProviderStat
             },
           ),
         ),
+        ],
       ),
     );
   }

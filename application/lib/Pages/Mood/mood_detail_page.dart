@@ -83,7 +83,7 @@ class _MoodDetailPageState extends State<MoodDetailPage> {
           const SizedBox(height: 24),
           Stack(alignment: Alignment.center, children: [AnimatedContainer(duration: const Duration(milliseconds: 400), width: 100, height: 100, decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: stateColor.withValues(alpha: 0.3), blurRadius: 40, spreadRadius: 5)])), Icon(AppIcons.getMoodIcon(tempValue.round()), size: 48, color: Colors.white)]),
           const SizedBox(height: 16), Text(_getLabel(tempValue.round()).toUpperCase(), style: TextStyle(color: stateColor, fontWeight: FontWeight.w900, letterSpacing: 3, fontSize: 16)),
-          const SizedBox(height: 24), Slider(value: tempValue, min: 1, max: 10, divisions: 18, onChanged: (v) => setDialogState(() => tempValue = v)),
+          const SizedBox(height: 24), Slider(value: tempValue, min: 1, max: 10, divisions: 18, activeColor: stateColor, onChanged: (v) => setDialogState(() => tempValue = v)),
           const SizedBox(height: 24), Align(alignment: Alignment.centerLeft, child: const Text("TAGS", style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white24, letterSpacing: 1.5, fontSize: 10))),
           const SizedBox(height: 12), Wrap(spacing: 8, runSpacing: 8, children: moodController.availableTags.map((tag) {
             final isSelected = tempTags.contains(tag.label);

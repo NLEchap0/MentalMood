@@ -97,7 +97,7 @@ class _AchievementCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(badge['title']!, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: isUnlocked ? Colors.white : Colors.white24), textAlign: TextAlign.center),
           const SizedBox(height: 4),
-          Text(badge['desc']!, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: isUnlocked ? Colors.white54 : Colors.white10), textAlign: TextAlign.center),
+          Text(badge['desc']!, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: isUnlocked ? Colors.white54 : Colors.white24), textAlign: TextAlign.center),
         ],
       ),
     );
