@@ -1,0 +1,202 @@
+import 'package:application/app/theme/app_colors.dart';
+import 'package:application/app/widgets/app_background.dart';
+import 'package:application/app/widgets/app_button.dart';
+import 'package:application/app/widgets/entrance_stagger.dart';
+import 'package:application/app/widgets/refresh_view.dart';
+import 'package:application/state/auth_controller.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+    final controller = context.read<AuthController>();
+    final success = await controller.login(
+      _usernameController.text,
+      _passwordController.text,
+    );
+    if (success && mounted) {
+      Navigator.pushReplacementNamed(context, '/home');
+    }
+  }
+
+  /// Pull-to-refresh: if a session already exists, go straight to Home.
+  Future<void> _refresh() async {
+    final loggedIn = await context.read<AuthController>().isLoggedIn();
+    if (loggedIn && mounted) {
+      Navigator.pushReplacementNamed(context, '/home');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.watch<AuthController>();
+
+    return Scaffold(
+      body: AppBackground(
+        child: SafeArea(
+          child: RefreshView(
+            onRefresh: _refresh,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 440),
+                  child: Form(
+                    key: _formKey,
+                    child: EntranceStagger(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: 24,
+                      children: [
+                        const SizedBox(height: 48),
+                        Center(
+                          child: Container(
+                            width: 88,
+                            height: 88,
+                            decoration: BoxDecoration(
+                              color: AppColors.accent.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.accent.withValues(
+                                    alpha: 0.25,
+                                  ),
+                                  blurRadius: 40,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.spa_rounded,
+                              color: AppColors.accent,
+                              size: 40,
+                            ),
+                          ),
+                        ),
+                        Column(
+                          children: [
+                            const Text(
+                              'MentalMood',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 34,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'A quiet space for your daily check-ins',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _usernameController,
+                          textInputAction: TextInputAction.next,
+                          style: const TextStyle(color: AppColors.textPrimary),
+                          decoration: const InputDecoration(
+                            labelText: 'Username',
+                            prefixIcon: Icon(
+                              Icons.person_outline_rounded,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Required'
+                              : null,
+                        ),
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: (_) => _handleLogin(),
+                          style: const TextStyle(color: AppColors.textPrimary),
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            prefixIcon: const Icon(
+                              Icons.lock_outline_rounded,
+                              color: AppColors.textSecondary,
+                            ),
+                            suffixIcon: IconButton(
+                              onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                size: 20,
+                                color: AppColors.textSecondary,
+                              ),
+                              tooltip: _obscurePassword
+                                  ? 'Show password'
+                                  : 'Hide password',
+                            ),
+                          ),
+                          validator: (v) =>
+                              (v == null || v.isEmpty) ? 'Required' : null,
+                        ),
+                        if (controller.errorMessage != null)
+                          Text(
+                            controller.errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AppColors.danger,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        const SizedBox(height: 8),
+                        AppButton(
+                          label: 'Sign In',
+                          onPressed: controller.isLoading ? null : _handleLogin,
+                          isLoading: controller.isLoading,
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/register'),
+                          child: const Text('New here? Create an account'),
+                        ),
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

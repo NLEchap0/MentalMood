@@ -1,19 +1,16 @@
-import 'package:application/DataBase/database.dart';
-import 'package:application/Logic/login_controller.dart';
-import 'package:application/Logic/mood_controller.dart';
-import 'package:application/Logic/register_controller.dart';
-import 'package:application/Pages/Access/login.dart';
-import 'package:application/Pages/Mood/achievements_page.dart';
-import 'package:application/Pages/Mood/mood_history_page.dart';
-import 'package:application/Pages/Mood/streak_stats_page.dart';
-import 'package:application/Pages/Mood/zen_mode_page.dart';
-import 'package:application/Pages/main_navigation_container.dart';
-import 'package:application/Pages/Settings/settings_page.dart';
-import 'package:application/Repositories/drift_emotion_repository.dart';
-import 'package:application/Repositories/drift_user_repository.dart';
-import 'package:application/Repositories/emotion_repository.dart';
-import 'package:application/Repositories/user_repository.dart';
-import 'package:application/Utils/theme.dart';
+import 'package:application/app/navigation/app_navigator.dart';
+import 'package:application/app/pages/access/login_page.dart';
+import 'package:application/app/pages/access/register_page.dart';
+import 'package:application/app/pages/shell/main_navigation_container.dart';
+import 'package:application/app/theme/app_theme.dart';
+import 'package:application/data/database/database.dart';
+import 'package:application/data/repositories/drift_emotion_repository.dart';
+import 'package:application/data/repositories/drift_user_repository.dart';
+import 'package:application/data/repositories/emotion_repository.dart';
+import 'package:application/data/repositories/user_repository.dart';
+import 'package:application/state/auth_controller.dart';
+import 'package:application/state/mood_controller.dart';
+import 'package:application/state/register_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -23,31 +20,39 @@ import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
-  Intl.defaultLocale = 'en_GB'; // Force English with European-style dates
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    debugPrint('Environment file not found or invalid: $e');
+  }
+  Intl.defaultLocale = 'en_GB';
   await initializeDateFormatting('en_GB', null);
 
   final db = AppDataBase();
   final userRepository = DriftUserRepository(db);
   final emotionRepository = DriftEmotionRepository(db);
-  final loginController = LoginController(userRepository: userRepository);
+  final authController = AuthController(userRepository: userRepository);
 
-  final bool loggedIn = await loginController.isLoggedIn();
+  final bool loggedIn = await authController.isLoggedIn();
 
   runApp(
     MultiProvider(
       providers: [
-        Provider<AppDataBase>.value(value: db),
         Provider<UserRepository>.value(value: userRepository),
         Provider<EmotionRepository>.value(value: emotionRepository),
-        ChangeNotifierProvider<LoginController>.value(value: loginController),
-        ChangeNotifierProvider(create: (_) => RegisterController(userRepository: userRepository)),
-        ChangeNotifierProvider(create: (_) => MoodController(emotionRepository: emotionRepository)),
+        ChangeNotifierProvider<AuthController>.value(value: authController),
+        ChangeNotifierProvider(
+          create: (_) => RegisterController(userRepository: userRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => MoodController(emotionRepository: emotionRepository),
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
+        title: 'MentalMood',
         theme: AppTheme.theme,
-        themeMode: ThemeMode.dark, // Force a single, premium dark experience
+        themeMode: ThemeMode.dark,
         locale: const Locale('en', 'GB'),
         supportedLocales: const [Locale('en', 'GB')],
         localizationsDelegates: const [
@@ -55,15 +60,15 @@ void main() async {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: loggedIn ? const MainNavigationContainer() : const Login(),
-        routes: {
-          '/login': (context) => const Login(),
-          '/home': (context) => const MainNavigationContainer(),
-          '/settings': (context) => const SettingsPage(),
-          '/history': (context) => const MoodHistoryPage(),
-          '/streak': (context) => const StreakStatsPage(),
-          '/achievements': (context) => const AchievementsPage(),
-          '/zen': (context) => const ZenModePage(),
+        initialRoute: loggedIn ? '/home' : '/login',
+        onGenerateRoute: (settings) {
+          final page = switch (settings.name) {
+            '/login' => const LoginPage(),
+            '/register' => const RegisterPage(),
+            '/home' => const MainNavigationContainer(),
+            _ => const LoginPage(),
+          };
+          return AppNavigator.route(page);
         },
       ),
     ),

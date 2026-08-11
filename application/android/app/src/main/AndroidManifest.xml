@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for network requests (AI insights service) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="application"
+        android:label="MentalMood"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

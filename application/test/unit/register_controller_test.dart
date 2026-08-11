@@ -1,6 +1,6 @@
-import 'package:application/DataBase/database.dart';
-import 'package:application/Logic/register_controller.dart';
-import 'package:application/Repositories/user_repository.dart';
+import 'package:application/data/repositories/user_repository.dart';
+import 'package:application/domain/models.dart';
+import 'package:application/state/register_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -10,9 +10,14 @@ void main() {
   late RegisterController registerController;
   late MockUserRepository mockUserRepository;
 
-  setUpAll(() {
-    registerFallbackValue(UserCompanion());
-  });
+  AppUser buildUser({int id = 1, String username = 'newuser'}) => AppUser(
+    id: id,
+    username: username,
+    name: 'New',
+    surname: 'User',
+    birthDate: DateTime(2000, 1, 1),
+    passwordHash: 'hashed',
+  );
 
   setUp(() {
     mockUserRepository = MockUserRepository();
@@ -21,53 +26,64 @@ void main() {
 
   group('RegisterController Tests', () {
     test('Registration success when username is available', () async {
-      const username = 'newuser';
-      
-      when(() => mockUserRepository.getUserByUsername(username))
-          .thenAnswer((_) async => null);
-      
-      when(() => mockUserRepository.createUser(any()))
-          .thenAnswer((_) async => 1);
+      when(
+        () => mockUserRepository.getUserByUsername('newuser'),
+      ).thenAnswer((_) async => null);
+      when(
+        () => mockUserRepository.createUser(
+          username: any(named: 'username'),
+          name: any(named: 'name'),
+          surname: any(named: 'surname'),
+          password: any(named: 'password'),
+          birthDate: any(named: 'birthDate'),
+        ),
+      ).thenAnswer((_) async => buildUser());
 
-      final result = await registerController.register(
-        username: username,
+      final user = await registerController.register(
+        username: 'newuser',
         name: 'New',
         surname: 'User',
         password: 'securePassword123',
         birthDate: DateTime(2000, 1, 1),
       );
 
-      expect(result, true);
+      expect(user, isNotNull);
       expect(registerController.errorMessage, null);
-      verify(() => mockUserRepository.createUser(any())).called(1);
+      verify(
+        () => mockUserRepository.createUser(
+          username: any(named: 'username'),
+          name: any(named: 'name'),
+          surname: any(named: 'surname'),
+          password: any(named: 'password'),
+          birthDate: any(named: 'birthDate'),
+        ),
+      ).called(1);
     });
 
     test('Registration fails when username already taken', () async {
-      const username = 'existinguser';
-      
-      final existingUser = UserData(
-        id: 1,
-        username: username,
-        name: 'Existing',
-        surname: 'User',
-        password: 'hashed',
-        birthDate: DateTime.now(),
-      );
+      when(
+        () => mockUserRepository.getUserByUsername('existinguser'),
+      ).thenAnswer((_) async => buildUser(username: 'existinguser'));
 
-      when(() => mockUserRepository.getUserByUsername(username))
-          .thenAnswer((_) async => existingUser);
-
-      final result = await registerController.register(
-        username: username,
+      final user = await registerController.register(
+        username: 'existinguser',
         name: 'Test',
         surname: 'User',
         password: 'password',
         birthDate: DateTime.now(),
       );
 
-      expect(result, false);
-      expect(registerController.errorMessage, "Username already taken.");
-      verifyNever(() => mockUserRepository.createUser(any()));
+      expect(user, null);
+      expect(registerController.errorMessage, 'Username already taken.');
+      verifyNever(
+        () => mockUserRepository.createUser(
+          username: any(named: 'username'),
+          name: any(named: 'name'),
+          surname: any(named: 'surname'),
+          password: any(named: 'password'),
+          birthDate: any(named: 'birthDate'),
+        ),
+      );
     });
   });
 }
