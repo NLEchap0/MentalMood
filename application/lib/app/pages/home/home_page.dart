@@ -199,7 +199,9 @@ class HomePage extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            // Align with the chart's plot area (the left axis label strip
+            // is 28px wide inside the chart).
+            padding: const EdgeInsets.fromLTRB(28, 0, 0, 0),
             child: Row(
               children: [
                 const Expanded(
@@ -243,7 +245,7 @@ class HomePage extends StatelessWidget {
             )
           else ...[
             Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.fromLTRB(28, 0, 0, 12),
               child: RangeSelector(
                 selected: controller.selectedRange,
                 onChanged: controller.setSelectedRange,

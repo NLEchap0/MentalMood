@@ -257,8 +257,9 @@ class MoodLineChart extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
+        // Align the legend with the plot area (the left axis strip is 28px).
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10),
+          padding: EdgeInsets.fromLTRB(28, 0, 0, 0),
           child: _MoodScaleLegend(),
         ),
       ],
