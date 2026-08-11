@@ -20,7 +20,13 @@ class MoodLineChart extends StatelessWidget {
     final maxYData = data.map((e) => e.value).reduce((a, b) => a > b ? a : b);
     final minY = data.map((e) => e.value).reduce((a, b) => a < b ? a : b);
     final maxY = (maxYData + 1.5).clamp(1.0, 12.0).toDouble();
-    final minYShow = (minY - 1.5).clamp(1.0, 10.0).toDouble();
+
+    // Snap the bottom of the axis to an ODD integer so the fixed interval
+    // always lands exactly on the mood labels (1, 3, 5, 7, 9) — like the
+    // website chart. A fractional floor would shift every tick off-label.
+    final rawMin = (minY - 1.5).clamp(1.0, 10.0).floor();
+    final minYShow =
+        (rawMin.isEven ? rawMin - 1 : rawMin).clamp(1, 10).toDouble();
 
     // Value-mapped gradient: the line color at any height equals the
     // mood color of that value (coral = low, sage = high).
