@@ -2,12 +2,16 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-/// Shared glassmorphism card. Radius scales with the card size
-/// (sm = small tiles, md = default cards, lg = hero panels).
+/// Shared glassmorphism card.
+/// Matches the website hero cards: white 4.5% fill, white 9% border,
+/// G3-scaled radius, subtle blur.
+///
+/// IMPORTANT: background and border live INSIDE the BackdropFilter —
+/// otherwise the blur would smear them (Flutter blurs everything painted
+/// behind the filter, including a parent-decorated border).
 class GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
-  final ShapeBorder? customShape;
   final GlassCardSize size;
   final double blur;
   final double opacity;
@@ -16,7 +20,6 @@ class GlassCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding,
-    this.customShape,
     this.size = GlassCardSize.md,
     this.blur = 8,
     this.opacity = 0.045,
@@ -24,23 +27,14 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Matches the website hero cards: white 4.5% fill, white 9% border,
-    // 26px G3 radius, subtle blur.
     final radius = switch (size) {
       GlassCardSize.sm => 20.0,
       GlassCardSize.md => 26.0,
       GlassCardSize.lg => 32.0,
     };
-    final shape =
-        customShape ??
-        RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radius),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.09)),
-        );
 
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: ShapeDecoration(shape: shape),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
         child: Container(
@@ -48,6 +42,10 @@ class GlassCard extends StatelessWidget {
           padding: padding,
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: opacity),
+            borderRadius: BorderRadius.circular(radius),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.09),
+            ),
           ),
           child: child,
         ),
