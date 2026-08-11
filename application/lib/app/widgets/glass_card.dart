@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:application/app/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 
 /// Shared glassmorphism card. Radius scales with the card size
@@ -19,22 +18,24 @@ class GlassCard extends StatelessWidget {
     this.padding,
     this.customShape,
     this.size = GlassCardSize.md,
-    this.blur = 15,
+    this.blur = 8,
     this.opacity = 0.045,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Matches the website hero cards: white 4.5% fill, white 9% border,
+    // 26px G3 radius, subtle blur.
     final radius = switch (size) {
-      GlassCardSize.sm => AppTokens.radiusSm,
-      GlassCardSize.md => AppTokens.radiusMd,
-      GlassCardSize.lg => AppTokens.radiusLg,
+      GlassCardSize.sm => 20.0,
+      GlassCardSize.md => 26.0,
+      GlassCardSize.lg => 32.0,
     };
     final shape =
         customShape ??
         RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radius),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.09)),
         );
 
     return Container(
