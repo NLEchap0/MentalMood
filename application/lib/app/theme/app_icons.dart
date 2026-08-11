@@ -30,22 +30,37 @@ abstract final class AppIcons {
   }
 
   static IconData fromString(String name) {
-    switch (name) {
+    // Normalize emoji stored by older seeds: strip ZWJ and variation
+    // selectors so both 'work' and '💼' map to the same icon.
+    final key = name.replaceAll('\u200d', '').replaceAll('\ufe0f', '');
+    switch (key) {
       case 'work':
+      case '💼':
         return Icons.work_outline_rounded;
       case 'sport':
+      case '🏃':
+      case '🏃♂':
         return Icons.fitness_center_rounded;
       case 'food':
+      case '🍎':
         return Icons.restaurant_rounded;
       case 'sleep':
+      case '😴':
         return Icons.bedtime_outlined;
       case 'family':
+      case '👨👩👧':
+      case '👪':
         return Icons.groups_2_rounded;
       case 'friends':
+      case '🤝':
+      case '👯':
         return Icons.person_add_rounded;
       case 'hobby':
+      case '🎨':
         return Icons.palette_outlined;
       case 'weather':
+      case '⛅':
+      case '🌤':
         return Icons.wb_sunny_outlined;
       case 'streak':
         return Icons.local_fire_department_rounded;

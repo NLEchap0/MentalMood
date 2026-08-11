@@ -55,7 +55,7 @@ class AppDataBase extends _$AppDataBase {
   AppDataBase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   // User operations
   Future<int> createUser(UserCompanion entity) => into(user).insert(entity);
@@ -128,6 +128,26 @@ class AppDataBase extends _$AppDataBase {
           // this covers databases created before the constraint was added.
           await customStatement(
             'CREATE UNIQUE INDEX IF NOT EXISTS "user_username_unique" ON "user"("username")',
+          );
+        }
+        if (from < 7) {
+          // v7: tags store Material icon KEYS, never emoji glyphs.
+          // Normalize rows seeded by older versions.
+          await customStatement(
+            "UPDATE mood_tag SET emoji = CASE emoji "
+            "WHEN '💼' THEN 'work' "
+            "WHEN '🏃' || char(0x200D) || '♂' || char(0xFE0F) THEN 'sport' "
+            "WHEN '🏃' THEN 'sport' "
+            "WHEN '🍎' THEN 'food' "
+            "WHEN '😴' THEN 'sleep' "
+            "WHEN '👨' || char(0x200D) || '👩' || char(0x200D) || '👧' THEN 'family' "
+            "WHEN '👪' THEN 'family' "
+            "WHEN '🤝' THEN 'friends' "
+            "WHEN '👯' THEN 'friends' "
+            "WHEN '🎨' THEN 'hobby' "
+            "WHEN '⛅' THEN 'weather' "
+            "WHEN '🌤' THEN 'weather' "
+            'ELSE emoji END',
           );
         }
       },
