@@ -63,11 +63,12 @@ class MoodLineChart extends StatelessWidget {
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    reservedSize: 36,
+                    reservedSize: 34,
                     interval: 2,
                     getTitlesWidget: (value, meta) {
+                      // Dormant (1) is intentionally omitted: the LOW
+                      // reference line at 3.5 marks the bottom zone instead.
                       final label = switch (value.toInt()) {
-                        1 => moodLabels[0],
                         3 => moodLabels[2],
                         5 => moodLabels[4],
                         7 => moodLabels[6],
@@ -153,6 +154,26 @@ class MoodLineChart extends StatelessWidget {
               ),
               extraLinesData: ExtraLinesData(
                 horizontalLines: [
+                  // Low zone reference line
+                  HorizontalLine(
+                    y: 3.5,
+                    color: Colors.white.withValues(alpha: 0.06),
+                    strokeWidth: 1,
+                    dashArray: [10, 5],
+                    label: HorizontalLineLabel(
+                      show: true,
+                      alignment: Alignment.topLeft,
+                      padding: const EdgeInsets.only(left: 6, bottom: 2),
+                      style: const TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                        color: AppColors.textFaint,
+                      ),
+                      labelResolver: (_) => 'LOW',
+                    ),
+                  ),
+                  // Stability reference line
                   HorizontalLine(
                     y: 5.5,
                     color: Colors.white.withValues(alpha: 0.1),
@@ -169,6 +190,25 @@ class MoodLineChart extends StatelessWidget {
                         color: AppColors.textFaint,
                       ),
                       labelResolver: (_) => 'STABILITY',
+                    ),
+                  ),
+                  // High zone reference line
+                  HorizontalLine(
+                    y: 7.5,
+                    color: Colors.white.withValues(alpha: 0.06),
+                    strokeWidth: 1,
+                    dashArray: [10, 5],
+                    label: HorizontalLineLabel(
+                      show: true,
+                      alignment: Alignment.topLeft,
+                      padding: const EdgeInsets.only(left: 6, bottom: 2),
+                      style: const TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                        color: AppColors.textFaint,
+                      ),
+                      labelResolver: (_) => 'HIGH',
                     ),
                   ),
                 ],
