@@ -1,32 +1,32 @@
 import 'package:flutter/material.dart';
 
-/// "Calm Tech" palette — deep violet-night base, lavender accent,
-/// warm coral→sage mood scale. Single source of truth for colors.
+/// Neon dark palette — near-black violet backgrounds with
+/// luminous accent colors and a neon mood scale.
 abstract final class AppColors {
-  // Background
-  static const Color backgroundBase = Color(0xFF16121F);
+  // Background (much darker)
+  static const Color backgroundBase = Color(0xFF0B0812);
   static const List<Color> backgroundGradient = [
-    Color(0xFF1B1527),
-    Color(0xFF221A33),
-    Color(0xFF14101F),
+    Color(0xFF110C1C),
+    Color(0xFF0D0916),
+    Color(0xFF060510),
   ];
 
   // Surfaces
-  static const Color surface = Color(0xFF211B31);
+  static const Color surface = Color(0xFF171221);
 
   // Text
   static const Color textPrimary = Color(0xFFF5F2FF);
   static const Color textSecondary = Color(0xFFA9A0C0);
   static const Color textFaint = Color(0xFF6B6480);
 
-  // Accents
-  static const Color accent = Color(0xFF9B8CFF);
-  static const Color danger = Color(0xFFFF6B6B);
-  static const Color success = Color(0xFF6FCF97);
-  static const Color gold = Color(0xFFFFC94D);
+  // Accents (neon)
+  static const Color accent = Color(0xFFB388FF);
+  static const Color danger = Color(0xFFFF3B5C);
+  static const Color success = Color(0xFF00FF9C);
+  static const Color gold = Color(0xFFFFE14D);
 
-  // Mood scale (1..10): coral → peach → sage
-  static const Color moodLow = Color(0xFFFF7A6E);
-  static const Color moodMid = Color(0xFFFFB35C);
-  static const Color moodHigh = Color(0xFF6FCF97);
+  // Mood scale (1..10) — neon coral → amber → green
+  static const Color moodLow = Color(0xFFFF5470);
+  static const Color moodMid = Color(0xFFFFB020);
+  static const Color moodHigh = Color(0xFF00FF9C);
 }

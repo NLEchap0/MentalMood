@@ -1,14 +1,15 @@
 import 'dart:ui';
 
+import 'package:application/app/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 /// Shared glassmorphism card.
-/// Matches the website hero cards: white 4.5% fill, white 9% border,
-/// G3-scaled radius, subtle blur.
+/// Near-black glass fill, white hairline border and a neon accent glow.
 ///
 /// IMPORTANT: background and border live INSIDE the BackdropFilter —
 /// otherwise the blur would smear them (Flutter blurs everything painted
-/// behind the filter, including a parent-decorated border).
+/// behind the filter, including a parent-decorated border). The neon glow
+/// sits OUTSIDE the clip (shadows are clipped away inside ClipRRect).
 class GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -33,21 +34,34 @@ class GlassCard extends StatelessWidget {
       GlassCardSize.lg => 32.0,
     };
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(radius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: Container(
-          width: double.infinity,
-          padding: padding,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: opacity),
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.09),
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        // Neon glow — must live outside ClipRRect to be visible.
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.10),
+            blurRadius: 28,
+            spreadRadius: -6,
           ),
-          child: child,
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: Container(
+            width: double.infinity,
+            padding: padding,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: opacity),
+              borderRadius: BorderRadius.circular(radius),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.10),
+              ),
+            ),
+            child: child,
+          ),
         ),
       ),
     );

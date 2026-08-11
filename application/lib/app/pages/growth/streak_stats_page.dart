@@ -52,10 +52,24 @@ class StreakStatsPage extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 44),
                       child: Column(
                         children: [
-                          const Icon(
-                            Icons.local_fire_department_rounded,
-                            color: AppColors.gold,
-                            size: 64,
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      AppColors.gold.withValues(alpha: 0.35),
+                                  blurRadius: 32,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.local_fire_department_rounded,
+                              color: AppColors.gold,
+                              size: 48,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           TweenAnimationBuilder<int>(
