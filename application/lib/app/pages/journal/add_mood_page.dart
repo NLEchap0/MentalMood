@@ -93,7 +93,9 @@ class _AddMoodPageState extends State<AddMoodPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     spacing: 40,
                     children: [
-                      const SizedBox(height: 96),
+                      // The AppBar (extendBodyBehindAppBar) already clears the
+                      // top area; keep only a small breathing gap.
+                      const SizedBox(height: 8),
                       GlassCard(
                         padding: const EdgeInsets.symmetric(vertical: 48),
                         child: Column(

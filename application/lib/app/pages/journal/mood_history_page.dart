@@ -187,6 +187,13 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
                   return Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: FilterChip(
+                      avatar: Icon(
+                        AppIcons.fromString(tag.emoji),
+                        size: 14,
+                        color: isSelected
+                            ? AppColors.accent
+                            : AppColors.textSecondary,
+                      ),
                       label: Text(
                         tag.label,
                         style: const TextStyle(
