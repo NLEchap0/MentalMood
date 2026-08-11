@@ -63,16 +63,15 @@ class MoodLineChart extends StatelessWidget {
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    reservedSize: 34,
+                    reservedSize: 28,
                     interval: 2,
                     getTitlesWidget: (value, meta) {
-                      // Dormant (1) is intentionally omitted: the LOW
-                      // reference line at 3.5 marks the bottom zone instead.
+                      // Compact axis, like the website: only the middle
+                      // zone labels (Pulse, Stasis, Active).
                       final label = switch (value.toInt()) {
                         3 => moodLabels[2],
                         5 => moodLabels[4],
                         7 => moodLabels[6],
-                        9 => moodLabels[8],
                         _ => '',
                       };
                       return SideTitleWidget(
@@ -81,7 +80,7 @@ class MoodLineChart extends StatelessWidget {
                           label,
                           textAlign: TextAlign.right,
                           style: const TextStyle(
-                            fontSize: 9,
+                            fontSize: 8,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textFaint,
                           ),
