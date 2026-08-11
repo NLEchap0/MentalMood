@@ -63,7 +63,7 @@ class MoodLineChart extends StatelessWidget {
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    reservedSize: 60,
+                    reservedSize: 36,
                     interval: 2,
                     getTitlesWidget: (value, meta) {
                       final label = switch (value.toInt()) {
