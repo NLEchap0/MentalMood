@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 /// Neon dark palette — near-black violet backgrounds with
 /// luminous accent colors and a neon mood scale.
 abstract final class AppColors {
-  // Background (much darker)
-  static const Color backgroundBase = Color(0xFF0B0812);
+  // Background (dark violet, gradient from the theme palette)
+  static const Color backgroundBase = Color(0xFF100C1B);
   static const List<Color> backgroundGradient = [
-    Color(0xFF110C1C),
-    Color(0xFF0D0916),
-    Color(0xFF060510),
+    Color(0xFF181123),
+    Color(0xFF141020),
+    Color(0xFF0C0918),
   ];
 
   // Surfaces

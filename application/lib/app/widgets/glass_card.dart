@@ -37,11 +37,16 @@ class GlassCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
-        // Neon glow — must live outside ClipRRect to be visible.
+        // Depth shadow + neon glow — both must live outside ClipRRect.
         boxShadow: [
           BoxShadow(
-            color: AppColors.accent.withValues(alpha: 0.10),
-            blurRadius: 28,
+            color: Colors.black.withValues(alpha: 0.45),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.08),
+            blurRadius: 26,
             spreadRadius: -6,
           ),
         ],
