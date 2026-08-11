@@ -195,7 +195,7 @@ class HomePage extends StatelessWidget {
     List<ChartPoint> data,
   ) {
     return GlassCard(
-      padding: const EdgeInsets.fromLTRB(4, 24, 16, 16),
+      padding: const EdgeInsets.fromLTRB(4, 24, 32, 16),
       child: Column(
         children: [
           Padding(
