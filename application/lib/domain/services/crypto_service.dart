@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -24,7 +25,7 @@ class CryptoService {
       bits: 256,
     );
     return pbkdf2.deriveKey(
-      secretKey: SecretKey(Uint8List.fromList(password.codeUnits)),
+      secretKey: SecretKey(Uint8List.fromList(utf8.encode(password))),
       nonce: salt,
     );
   }
@@ -41,8 +42,12 @@ class CryptoService {
     return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
   }
 
-  SecretKey dekFromBytes(List<int> bytes) =>
-      SecretKey(Uint8List.fromList(bytes));
+  SecretKey dekFromBytes(List<int> bytes) {
+    if (bytes.length != 32) {
+      throw ArgumentError('DEK must be exactly 32 bytes, got ${bytes.length}');
+    }
+    return SecretKey(Uint8List.fromList(bytes));
+  }
 
   Future<EncryptedPayload> encryptString(
     String plaintext,
@@ -52,7 +57,7 @@ class CryptoService {
       List<int>.generate(nonceLength, (_) => _random.nextInt(256)),
     );
     final box = await _aesGcm.encrypt(
-      Uint8List.fromList(plaintext.codeUnits),
+      Uint8List.fromList(utf8.encode(plaintext)),
       secretKey: dek,
       nonce: nonce,
     );
@@ -97,6 +102,9 @@ class CryptoService {
   }
 
   String decryptString(EncryptedPayload payload, SecretKey dek) {
+    if (dek is! SecretKeyData) {
+      throw ArgumentError('decryptString requires an in-memory SecretKeyData');
+    }
     final box = SecretBox(
       payload.cipherText,
       nonce: payload.nonce,
@@ -104,8 +112,8 @@ class CryptoService {
     );
     final decrypted = _aesGcm.toSync().decryptSync(
           box,
-          secretKeyData: dek as SecretKeyData,
+          secretKeyData: dek,
         );
-    return String.fromCharCodes(decrypted);
+    return utf8.decode(decrypted);
   }
 }

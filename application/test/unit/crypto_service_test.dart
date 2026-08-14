@@ -60,6 +60,18 @@ void main() {
 
       expect(await crypto.dekFromBytes(bytes).extractBytes(), bytes);
     });
+
+    test('dekFromBytes rejects wrong length', () {
+      final crypto = CryptoService();
+
+      expect(
+        () => crypto.dekFromBytes(List<int>.generate(16, (i) => i)),
+        throwsArgumentError,
+      );
+      expect(() => crypto.dekFromBytes(const []), throwsArgumentError);
+      expect(() => crypto.dekFromBytes(List<int>.generate(33, (i) => i)),
+          throwsArgumentError);
+    });
   });
 
   group('CryptoService string encryption', () {
@@ -71,6 +83,57 @@ void main() {
       final plain = crypto.decryptString(payload, dek);
 
       expect(plain, 'nota segreta 123');
+    });
+
+    test('roundtrip with emoji', () async {
+      final crypto = CryptoService(pbkdf2Iterations: 1000);
+      final dek = await crypto.generateDek();
+      const text = 'nota 😀 segreta 🎉';
+
+      final payload = await crypto.encryptString(text, dek);
+
+      expect(crypto.decryptString(payload, dek), text);
+    });
+
+    test('roundtrip with accented characters', () async {
+      final crypto = CryptoService(pbkdf2Iterations: 1000);
+      final dek = await crypto.generateDek();
+      const text = 'café à è é';
+
+      final payload = await crypto.encryptString(text, dek);
+
+      expect(crypto.decryptString(payload, dek), text);
+    });
+
+    test('roundtrip with CJK characters', () async {
+      final crypto = CryptoService(pbkdf2Iterations: 1000);
+      final dek = await crypto.generateDek();
+      const text = '心理健康 メンタル';
+
+      final payload = await crypto.encryptString(text, dek);
+
+      expect(crypto.decryptString(payload, dek), text);
+    });
+
+    test('roundtrip with empty string', () async {
+      final crypto = CryptoService(pbkdf2Iterations: 1000);
+      final dek = await crypto.generateDek();
+
+      final payload = await crypto.encryptString('', dek);
+
+      expect(crypto.decryptString(payload, dek), '');
+    });
+
+    test('decryptString throws ArgumentError for non-SecretKeyData key',
+        () async {
+      final crypto = CryptoService(pbkdf2Iterations: 1000);
+      final payload =
+          await crypto.encryptString('segreto', await crypto.generateDek());
+
+      expect(
+        () => crypto.decryptString(payload, _OpaqueSecretKey()),
+        throwsArgumentError,
+      );
     });
 
     test('encryptString produces different ciphertext each time (random nonce)',
@@ -176,4 +239,13 @@ void main() {
       expect(await unwrapped.extractBytes(), await dek.extractBytes());
     });
   });
+}
+
+class _OpaqueSecretKey extends SecretKey {
+  _OpaqueSecretKey() : super.constructor();
+
+  @override
+  Future<SecretKeyData> extract() async {
+    throw UnsupportedError('opaque key');
+  }
 }
