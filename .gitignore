@@ -14,3 +14,4 @@ build/
 
 # Docs and opencode scratch — kept locally, never committed
 docs/
+.superpowers/
