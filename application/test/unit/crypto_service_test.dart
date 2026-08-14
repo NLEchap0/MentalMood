@@ -125,4 +125,55 @@ void main() {
       expect(crypto.decryptString(restored, dek), 'giro completo');
     });
   });
+
+  group('CryptoService envelope (DEK wrapping)', () {
+    test('wrapDek/unwrapDek roundtrip', () async {
+      final crypto = CryptoService(pbkdf2Iterations: 1000);
+      final salt = List<int>.generate(16, (i) => i);
+      final kek = await crypto.deriveKek(password: 'password123', salt: salt);
+      final dek = await crypto.generateDek();
+
+      final wrapped = await crypto.wrapDek(dek: dek, kek: kek);
+      final unwrapped = await crypto.unwrapDek(wrappedDek: wrapped, kek: kek);
+
+      expect(await unwrapped.extractBytes(), await dek.extractBytes());
+    });
+
+    test('unwrapDek with wrong KEK fails', () async {
+      final crypto = CryptoService(pbkdf2Iterations: 1000);
+      final salt = List<int>.generate(16, (i) => i);
+      final kek = await crypto.deriveKek(password: 'password123', salt: salt);
+      final wrongKek = await crypto.deriveKek(password: 'wrongpass', salt: salt);
+      final dek = await crypto.generateDek();
+
+      final wrapped = await crypto.wrapDek(dek: dek, kek: kek);
+
+      await expectLater(
+        crypto.unwrapDek(wrappedDek: wrapped, kek: wrongKek),
+        throwsA(isA<SecretBoxAuthenticationError>()),
+      );
+    });
+
+    test('wrapped DEK starts with version byte and roundtrips through base64',
+        () async {
+      final crypto = CryptoService(pbkdf2Iterations: 1000);
+      final salt = List<int>.generate(16, (i) => i);
+      final kek = await crypto.deriveKek(password: 'password123', salt: salt);
+      final dek = await crypto.generateDek();
+
+      final wrapped = await crypto.wrapDek(dek: dek, kek: kek);
+
+      expect(wrapped.first, payloadVersion);
+      final restored = EncryptedPayload.fromBytes(wrapped);
+      final unwrapped = await crypto.unwrapDek(
+        wrappedDek: EncryptedPayload(
+          nonce: restored.nonce,
+          cipherText: restored.cipherText,
+          mac: restored.mac,
+        ).toBytes(),
+        kek: kek,
+      );
+      expect(await unwrapped.extractBytes(), await dek.extractBytes());
+    });
+  });
 }

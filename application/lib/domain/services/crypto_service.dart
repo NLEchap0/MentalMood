@@ -63,6 +63,39 @@ class CryptoService {
     );
   }
 
+  Future<List<int>> wrapDek({
+    required SecretKey dek,
+    required SecretKey kek,
+  }) async {
+    final nonce = Uint8List.fromList(
+      List<int>.generate(nonceLength, (_) => _random.nextInt(256)),
+    );
+    final box = await _aesGcm.encrypt(
+      await dek.extractBytes(),
+      secretKey: kek,
+      nonce: nonce,
+    );
+    return EncryptedPayload(
+      nonce: box.nonce,
+      cipherText: box.cipherText,
+      mac: box.mac.bytes,
+    ).toBytes();
+  }
+
+  Future<SecretKey> unwrapDek({
+    required List<int> wrappedDek,
+    required SecretKey kek,
+  }) async {
+    final payload = EncryptedPayload.fromBytes(wrappedDek);
+    final box = SecretBox(
+      payload.cipherText,
+      nonce: payload.nonce,
+      mac: Mac(payload.mac),
+    );
+    final dekBytes = await _aesGcm.decrypt(box, secretKey: kek);
+    return SecretKey(dekBytes);
+  }
+
   String decryptString(EncryptedPayload payload, SecretKey dek) {
     final box = SecretBox(
       payload.cipherText,
