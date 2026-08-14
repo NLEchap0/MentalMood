@@ -15,3 +15,6 @@ build/
 # Docs and opencode scratch — kept locally, never committed
 docs/
 .superpowers/
+
+# PHP API — deployed via FTP only, never committed
+API/
