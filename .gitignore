@@ -11,3 +11,6 @@ build/
 .dart_tool/
 .pub/
 .pub-cache/
+
+# Docs and opencode scratch — kept locally, never committed
+docs/
