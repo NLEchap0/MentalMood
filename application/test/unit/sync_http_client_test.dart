@@ -104,6 +104,42 @@ void main() {
       );
     });
 
+    test('throws SyncFailure 500 preserving statusCode on non-JSON body', () async {
+      final client = MockClient((_) async {
+        return http.Response('<html><body>Internal Server Error</body></html>', 500);
+      });
+      final sync = HttpSyncClient(client: client);
+      expect(
+        () => sync.postSync(
+          baseUrl: 'http://test.local',
+          accessToken: 't',
+          syncKey: 'k' * 64,
+          body: {'ts': 1, 'nonce': 'a' * 32, 'records': []},
+        ),
+        throwsA(isA<SyncFailure>()
+            .having((e) => e.statusCode, 'statusCode', 500)
+            .having((e) => e.code, 'code', 'server_error')),
+      );
+    });
+
+    test('normalizes baseUrl with trailing slash', () async {
+      late http.Request captured;
+      final client = MockClient((request) async {
+        captured = request;
+        return http.Response('{"pulled":[],"server_time":"2026-01-01T12:00:00Z"}', 200);
+      });
+
+      final sync = HttpSyncClient(client: client);
+      await sync.postSync(
+        baseUrl: 'http://test.local/',
+        accessToken: 'token123',
+        syncKey: 'k' * 64,
+        body: {'ts': 1, 'nonce': 'a' * 32, 'records': []},
+      );
+
+      expect(captured.url.toString(), 'http://test.local/sync');
+    });
+
     test('throws SyncFailure network on socket error', () async {
       final client = MockClient((_) async => throw Exception('boom'));
       final sync = HttpSyncClient(client: client);

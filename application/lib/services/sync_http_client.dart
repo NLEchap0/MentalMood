@@ -27,7 +27,11 @@ class HttpSyncClient implements SyncHttpClient {
   }) async {
     final raw = jsonEncode(body);
     final signature = await _hmacHex(syncKey, raw);
-    final uri = Uri.parse('$baseUrl/sync');
+    var normalized = baseUrl;
+    if (normalized.endsWith('/')) {
+      normalized = normalized.substring(0, normalized.length - 1);
+    }
+    final uri = Uri.parse('$normalized/sync');
     try {
       final response = await _client.post(
         uri,
@@ -38,18 +42,28 @@ class HttpSyncClient implements SyncHttpClient {
         },
         body: raw,
       );
-      final decoded = jsonDecode(response.body);
       if (response.statusCode != 200) {
-        final error = decoded is Map<String, dynamic>
-            ? decoded['error'] as Map<String, dynamic>?
-            : null;
+        var code = 'unknown';
+        var message = '';
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map<String, dynamic>) {
+            final error = decoded['error'];
+            if (error is Map<String, dynamic>) {
+              code = (error['code'] as String?) ?? 'unknown';
+              message = (error['message'] as String?) ?? '';
+            }
+          }
+        } catch (_) {
+          code = response.statusCode >= 500 ? 'server_error' : 'unknown';
+        }
         throw SyncFailure(
           statusCode: response.statusCode,
-          code: (error?['code'] as String?) ?? 'unknown',
-          message: (error?['message'] as String?) ?? '',
+          code: code,
+          message: message,
         );
       }
-      return (decoded as Map<String, dynamic>);
+      return (jsonDecode(response.body) as Map<String, dynamic>);
     } on SyncFailure {
       rethrow;
     } catch (_) {
