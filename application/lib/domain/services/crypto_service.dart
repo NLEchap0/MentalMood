@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:application/domain/services/encrypted_payload.dart';
 import 'package:cryptography/cryptography.dart';
 
 /// E2EE envelope cryptography: KEK derived from password (PBKDF2),
@@ -42,4 +43,36 @@ class CryptoService {
 
   SecretKey dekFromBytes(List<int> bytes) =>
       SecretKey(Uint8List.fromList(bytes));
+
+  Future<EncryptedPayload> encryptString(
+    String plaintext,
+    SecretKey dek,
+  ) async {
+    final nonce = Uint8List.fromList(
+      List<int>.generate(nonceLength, (_) => _random.nextInt(256)),
+    );
+    final box = await _aesGcm.encrypt(
+      Uint8List.fromList(plaintext.codeUnits),
+      secretKey: dek,
+      nonce: nonce,
+    );
+    return EncryptedPayload(
+      nonce: box.nonce,
+      cipherText: box.cipherText,
+      mac: box.mac.bytes,
+    );
+  }
+
+  String decryptString(EncryptedPayload payload, SecretKey dek) {
+    final box = SecretBox(
+      payload.cipherText,
+      nonce: payload.nonce,
+      mac: Mac(payload.mac),
+    );
+    final decrypted = _aesGcm.toSync().decryptSync(
+          box,
+          secretKeyData: dek as SecretKeyData,
+        );
+    return String.fromCharCodes(decrypted);
+  }
 }

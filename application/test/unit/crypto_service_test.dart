@@ -1,4 +1,6 @@
 import 'package:application/domain/services/crypto_service.dart';
+import 'package:application/domain/services/encrypted_payload.dart';
+import 'package:cryptography/cryptography.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -57,6 +59,70 @@ void main() {
       final bytes = List<int>.generate(32, (i) => i);
 
       expect(await crypto.dekFromBytes(bytes).extractBytes(), bytes);
+    });
+  });
+
+  group('CryptoService string encryption', () {
+    test('encrypt/decrypt roundtrip', () async {
+      final crypto = CryptoService(pbkdf2Iterations: 1000);
+      final dek = await crypto.generateDek();
+
+      final payload = await crypto.encryptString('nota segreta 123', dek);
+      final plain = crypto.decryptString(payload, dek);
+
+      expect(plain, 'nota segreta 123');
+    });
+
+    test('encryptString produces different ciphertext each time (random nonce)',
+        () async {
+      final crypto = CryptoService(pbkdf2Iterations: 1000);
+      final dek = await crypto.generateDek();
+
+      final p1 = await crypto.encryptString('stesso testo', dek);
+      final p2 = await crypto.encryptString('stesso testo', dek);
+
+      expect(p1.cipherText, isNot(p2.cipherText));
+      expect(p1.nonce, isNot(p2.nonce));
+    });
+
+    test('decryptString throws on tampered ciphertext', () async {
+      final crypto = CryptoService(pbkdf2Iterations: 1000);
+      final dek = await crypto.generateDek();
+      final payload = await crypto.encryptString('dati intimi', dek);
+
+      final tampered = EncryptedPayload(
+        nonce: payload.nonce,
+        cipherText: [...payload.cipherText]..[0] = payload.cipherText[0] ^ 0xFF,
+        mac: payload.mac,
+      );
+
+      expect(
+        () => crypto.decryptString(tampered, dek),
+        throwsA(isA<SecretBoxAuthenticationError>()),
+      );
+    });
+
+    test('decryptString with wrong key throws', () async {
+      final crypto = CryptoService(pbkdf2Iterations: 1000);
+      final dek = await crypto.generateDek();
+      final wrongDek = await crypto.generateDek();
+      final payload = await crypto.encryptString('segreto', dek);
+
+      expect(
+        () => crypto.decryptString(payload, wrongDek),
+        throwsA(isA<SecretBoxAuthenticationError>()),
+      );
+    });
+
+    test('serialized payload survives base64 roundtrip after decryption',
+        () async {
+      final crypto = CryptoService(pbkdf2Iterations: 1000);
+      final dek = await crypto.generateDek();
+
+      final payload = await crypto.encryptString('giro completo', dek);
+      final restored = EncryptedPayload.fromBytes(payload.toBytes());
+
+      expect(crypto.decryptString(restored, dek), 'giro completo');
     });
   });
 }
