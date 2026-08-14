@@ -1,57 +1,70 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-/// Typography system: Outfit for display/numbers, Poppins for body.
+/// Typography system: Geist (Vercel) for everything,
+/// with tight tracking on display sizes and generous leading on body text.
 abstract final class AppTypography {
+  static const String displayFont = 'Geist';
+  static const String bodyFont = 'Geist';
+
   static TextTheme get textTheme {
     final base = ThemeData(brightness: Brightness.dark).textTheme;
-    final outfit = GoogleFonts.outfitTextTheme(base);
-    final poppins = GoogleFonts.poppinsTextTheme(base);
 
     return base
         .copyWith(
-          displayLarge: outfit.displayLarge?.copyWith(
+          displayLarge: base.displayLarge?.copyWith(
+            fontFamily: displayFont,
             fontSize: 34,
             fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
+            letterSpacing: -1,
           ),
-          displayMedium: outfit.displayMedium?.copyWith(
+          displayMedium: base.displayMedium?.copyWith(
+            fontFamily: displayFont,
             fontSize: 28,
             fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
+            letterSpacing: -0.75,
           ),
-          headlineSmall: outfit.headlineSmall?.copyWith(
+          headlineSmall: base.headlineSmall?.copyWith(
+            fontFamily: displayFont,
             fontSize: 24,
             fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
           ),
-          titleLarge: outfit.titleLarge?.copyWith(
+          titleLarge: base.titleLarge?.copyWith(
+            fontFamily: displayFont,
             fontSize: 20,
             fontWeight: FontWeight.w700,
+            letterSpacing: -0.25,
           ),
-          titleMedium: poppins.titleMedium?.copyWith(
+          titleMedium: base.titleMedium?.copyWith(
+            fontFamily: bodyFont,
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
-          bodyLarge: poppins.bodyLarge?.copyWith(
+          bodyLarge: base.bodyLarge?.copyWith(
+            fontFamily: bodyFont,
             fontSize: 16,
             fontWeight: FontWeight.w400,
             height: 1.5,
           ),
-          bodyMedium: poppins.bodyMedium?.copyWith(
+          bodyMedium: base.bodyMedium?.copyWith(
+            fontFamily: bodyFont,
             fontSize: 14,
             fontWeight: FontWeight.w400,
             height: 1.5,
           ),
-          labelLarge: poppins.labelLarge?.copyWith(
+          labelLarge: base.labelLarge?.copyWith(
+            fontFamily: bodyFont,
             fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
-          labelMedium: poppins.labelMedium?.copyWith(
+          labelMedium: base.labelMedium?.copyWith(
+            fontFamily: bodyFont,
             fontSize: 11,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
           ),
-          labelSmall: poppins.labelSmall?.copyWith(
+          labelSmall: base.labelSmall?.copyWith(
+            fontFamily: bodyFont,
             fontSize: 10,
             fontWeight: FontWeight.w600,
           ),
