@@ -1,0 +1,250 @@
+import 'dart:convert';
+
+import 'package:application/data/secure/secure_key_store.dart';
+import 'package:application/domain/services/crypto_service.dart';
+import 'package:application/services/auth_api_client.dart';
+import 'package:cryptography/cryptography.dart';
+import 'package:flutter/foundation.dart';
+
+/// Gestisce la sessione cloud (login/register verso l'API), lo stato
+/// dell'abbonamento e il consenso AI. La sessione vive in flutter_secure_storage.
+class CloudController extends ChangeNotifier {
+  CloudController({
+    required AuthApiClient apiClient,
+    required SecureKeyStore keyStore,
+    required CryptoService crypto,
+  })  : _api = apiClient,
+        _store = keyStore,
+        _crypto = crypto;
+
+  final AuthApiClient _api;
+  final SecureKeyStore _store;
+  final CryptoService _crypto;
+
+  AuthSession? _session;
+  AuthSession? get session => _session;
+
+  SubscriptionInfo? _subscription;
+  SubscriptionInfo? get subscription => _subscription;
+
+  bool _consentEnabled = false;
+  bool get consentEnabled => _consentEnabled;
+
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
+  String? _errorCode;
+  String? get errorCode => _errorCode;
+
+  String? _lastSyncResult;
+  String? get lastSyncResult => _lastSyncResult;
+
+  void setSyncResult(String value) {
+    _lastSyncResult = value;
+    notifyListeners();
+  }
+
+  bool get isConnected => _session != null;
+
+  Future<bool> registerCloud({
+    required String username,
+    required String password,
+  }) async {
+    _setLoading(true);
+    try {
+      final dek = await _crypto.generateDek();
+      final salt = await _crypto.generateSalt();
+      final saltBytes = _hexToBytes(salt);
+      final kek = await _crypto.deriveKek(password: password, salt: saltBytes);
+      final wrapped = await _crypto.wrapDek(dek: dek, kek: kek);
+
+      await _api.register(
+        username: username,
+        password: password,
+        kekSalt: salt,
+        wrappedDek: base64Encode(wrapped),
+      );
+      await _store.write('cloud_kek_salt', salt);
+      await _store.write('cloud_dek', _bytesToHex(await dek.extractBytes()));
+
+      await _loginAfterRegister(username, password);
+      _setLoading(false);
+      return true;
+    } on CloudApiFailure catch (e) {
+      _errorCode = e.code;
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  Future<bool> loginCloud({
+    required String username,
+    required String password,
+  }) async {
+    _setLoading(true);
+    try {
+      final session = await _api.login(username: username, password: password);
+
+      // Recupera salt + wrapped DEK dal server per derivare la DEK locale.
+      final export = await _api.exportData(session.accessToken);
+      final salt = export['kek_salt'] as String?;
+      final wrappedB64 = export['wrapped_dek'] as String?;
+      if (salt != null && wrappedB64 != null) {
+        final kek = await _crypto.deriveKek(
+          password: password,
+          salt: _hexToBytes(salt),
+        );
+        final dek = await _crypto.unwrapDek(
+          wrappedDek: base64Decode(wrappedB64),
+          kek: kek,
+        );
+        await _store.write('cloud_kek_salt', salt);
+        await _store.write('cloud_dek', _bytesToHex(await dek.extractBytes()));
+      }
+
+      await _persistSession(session);
+      _setLoading(false);
+      return true;
+    } on CloudApiFailure catch (e) {
+      _errorCode = e.code;
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  Future<bool> restoreSession() async {
+    final username = await _store.read('cloud_username');
+    final accessToken = await _store.read('cloud_access_token');
+    final refreshToken = await _store.read('cloud_refresh_token');
+    final syncKey = await _store.read('cloud_sync_key');
+    if (username == null || accessToken == null) return false;
+    _session = AuthSession(
+      accessToken: accessToken,
+      refreshToken: refreshToken ?? '',
+      syncKey: syncKey ?? '',
+      username: username,
+      plan: await _store.read('cloud_plan') ?? 'free',
+      status: await _store.read('cloud_status') ?? 'none',
+    );
+    _consentEnabled = await _store.read('cloud_consent') == 'true';
+    notifyListeners();
+    return true;
+  }
+
+  Future<void> logoutCloud() async {
+    _session = null;
+    _subscription = null;
+    _consentEnabled = false;
+    for (final key in [
+      'cloud_username',
+      'cloud_access_token',
+      'cloud_refresh_token',
+      'cloud_sync_key',
+      'cloud_dek',
+      'cloud_kek_salt',
+      'cloud_plan',
+      'cloud_status',
+      'cloud_consent',
+    ]) {
+      await _store.delete(key);
+    }
+    notifyListeners();
+  }
+
+  Future<bool> refreshSubscription() async {
+    final session = _session;
+    if (session == null) return false;
+    try {
+      _subscription = await _api.subscription(session.accessToken);
+      notifyListeners();
+      return true;
+    } on CloudApiFailure catch (e) {
+      _errorCode = e.code;
+      return false;
+    }
+  }
+
+  Future<bool> setAiConsent(bool consent) async {
+    final session = _session;
+    if (session == null) return false;
+    try {
+      final result = await _api.setConsent(
+        accessToken: session.accessToken,
+        consent: consent,
+      );
+      _consentEnabled = result.consent;
+      await _store.write('cloud_consent', result.consent ? 'true' : 'false');
+      notifyListeners();
+      return true;
+    } on CloudApiFailure catch (e) {
+      _errorCode = e.code;
+      return false;
+    }
+  }
+
+  Future<bool> deleteCloudAccount() async {
+    final session = _session;
+    if (session == null) return false;
+    try {
+      await _api.deleteAccount(session.accessToken);
+      await logoutCloud();
+      return true;
+    } on CloudApiFailure catch (e) {
+      _errorCode = e.code;
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>?> exportCloudData() async {
+    final session = _session;
+    if (session == null) return null;
+    try {
+      return await _api.exportData(session.accessToken);
+    } on CloudApiFailure catch (e) {
+      _errorCode = e.code;
+      return null;
+    }
+  }
+
+  /// DEK esadecimale per il SyncService (se presente una sessione cloud).
+  Future<SecretKey?> cloudDek() async {
+    final hex = await _store.read('cloud_dek');
+    if (hex == null) return null;
+    return _crypto.dekFromBytes(_hexToBytes(hex));
+  }
+
+  Future<void> _loginAfterRegister(String username, String password) async {
+    final session = await _api.login(username: username, password: password);
+    await _persistSession(session);
+  }
+
+  Future<void> _persistSession(AuthSession session) async {
+    _session = session;
+    await _store.write('cloud_username', session.username);
+    await _store.write('cloud_access_token', session.accessToken);
+    await _store.write('cloud_refresh_token', session.refreshToken);
+    await _store.write('cloud_sync_key', session.syncKey);
+    await _store.write('cloud_plan', session.plan);
+    await _store.write('cloud_status', session.status);
+    _consentEnabled = false;
+    await _store.write('cloud_consent', 'false');
+    notifyListeners();
+  }
+
+  void _setLoading(bool value) {
+    _isLoading = value;
+    if (value) _errorCode = null;
+    notifyListeners();
+  }
+
+  List<int> _hexToBytes(String hex) {
+    return [
+      for (var i = 0; i < hex.length; i += 2)
+        int.parse(hex.substring(i, i + 2), radix: 16),
+    ];
+  }
+
+  String _bytesToHex(List<int> bytes) {
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  }
+}

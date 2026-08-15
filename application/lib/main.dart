@@ -8,7 +8,14 @@ import 'package:application/data/repositories/drift_emotion_repository.dart';
 import 'package:application/data/repositories/drift_user_repository.dart';
 import 'package:application/data/repositories/emotion_repository.dart';
 import 'package:application/data/repositories/user_repository.dart';
+import 'package:application/data/secure/secure_key_store.dart';
+import 'package:application/domain/services/crypto_service.dart';
+import 'package:application/services/auth_api_client.dart';
+import 'package:application/services/checkin_scheduler.dart';
+import 'package:application/services/sync_http_client.dart';
+import 'package:application/services/sync_service.dart';
 import 'package:application/state/auth_controller.dart';
+import 'package:application/state/cloud_controller.dart';
 import 'package:application/state/mood_controller.dart';
 import 'package:application/state/register_controller.dart';
 import 'package:flutter/material.dart';
@@ -35,17 +42,44 @@ void main() async {
 
   final bool loggedIn = await authController.isLoggedIn();
 
+  final crypto = CryptoService();
+  final keyStore = FlutterSecureKeyStore();
+  final cloudController = CloudController(
+    apiClient: AuthApiClient(),
+    keyStore: keyStore,
+    crypto: crypto,
+  );
+  await cloudController.restoreSession();
+
+  final syncService = SyncService(
+    emotionRepository: emotionRepository,
+    httpClient: HttpSyncClient(),
+    crypto: crypto,
+  );
+
   runApp(
     MultiProvider(
       providers: [
         Provider<UserRepository>.value(value: userRepository),
         Provider<EmotionRepository>.value(value: emotionRepository),
+        Provider<SecureKeyStore>.value(value: keyStore),
+        Provider<CryptoService>.value(value: crypto),
         ChangeNotifierProvider<AuthController>.value(value: authController),
+        ChangeNotifierProvider<CloudController>.value(
+          value: cloudController,
+        ),
+        ChangeNotifierProvider<SyncService>.value(value: syncService),
         ChangeNotifierProvider(
           create: (_) => RegisterController(userRepository: userRepository),
         ),
         ChangeNotifierProvider(
           create: (_) => MoodController(emotionRepository: emotionRepository),
+        ),
+        Provider<CheckinScheduler>.value(
+          value: CheckinScheduler(
+            notifications: _UnimplementedNotificationService(),
+            now: DateTime.now,
+          ),
         ),
       ],
       child: MaterialApp(
@@ -73,4 +107,22 @@ void main() async {
       ),
     ),
   );
+}
+
+/// Placeholder finché l'implementazione nativa delle notifiche non è
+/// disponibile (richiede la config nativa Android/iOS, documentata al deploy).
+class _UnimplementedNotificationService implements NotificationService {
+  @override
+  Future<bool> requestPermission() async => false;
+
+  @override
+  Future<void> scheduleDaily({
+    required int id,
+    required TimeOfDay time,
+    required String title,
+    required String body,
+  }) async {}
+
+  @override
+  Future<void> cancel(int id) async {}
 }

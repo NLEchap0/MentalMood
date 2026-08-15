@@ -3,8 +3,15 @@ import 'package:application/app/pages/access/login_page.dart';
 import 'package:application/app/pages/shell/main_navigation_container.dart';
 import 'package:application/data/repositories/emotion_repository.dart';
 import 'package:application/data/repositories/user_repository.dart';
+import 'package:application/data/secure/secure_key_store.dart';
 import 'package:application/domain/models.dart';
+import 'package:application/domain/services/crypto_service.dart';
+import 'package:application/services/auth_api_client.dart';
+import 'package:application/services/checkin_scheduler.dart';
+import 'package:application/services/sync_http_client.dart';
+import 'package:application/services/sync_service.dart';
 import 'package:application/state/auth_controller.dart';
+import 'package:application/state/cloud_controller.dart';
 import 'package:application/state/mood_controller.dart';
 import 'package:application/state/register_controller.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +23,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 class MockUserRepository extends Mock implements UserRepository {}
 
 class MockEmotionRepository extends Mock implements EmotionRepository {}
+
+class InMemoryKeyStore implements SecureKeyStore {
+  final _map = <String, String>{};
+
+  @override
+  Future<void> write(String key, String value) async => _map[key] = value;
+
+  @override
+  Future<String?> read(String key) async => _map[key];
+
+  @override
+  Future<void> delete(String key) async => _map.remove(key);
+}
 
 void main() {
   setUpAll(() {
@@ -54,11 +74,35 @@ void main() {
       providers: [
         Provider<UserRepository>.value(value: userRepository),
         Provider<EmotionRepository>.value(value: emotionRepository),
+        Provider<SecureKeyStore>.value(value: InMemoryKeyStore()),
+        Provider<CryptoService>.value(
+          value: CryptoService(pbkdf2Iterations: 1000),
+        ),
         ChangeNotifierProvider<AuthController>.value(value: authController),
+        ChangeNotifierProvider<CloudController>.value(
+          value: CloudController(
+            apiClient: AuthApiClient(),
+            keyStore: InMemoryKeyStore(),
+            crypto: CryptoService(pbkdf2Iterations: 1000),
+          ),
+        ),
+        ChangeNotifierProvider<SyncService>.value(
+          value: SyncService(
+            emotionRepository: emotionRepository,
+            httpClient: HttpSyncClient(),
+            crypto: CryptoService(pbkdf2Iterations: 1000),
+          ),
+        ),
         ChangeNotifierProvider(
           create: (_) => RegisterController(userRepository: userRepository),
         ),
         ChangeNotifierProvider<MoodController>.value(value: moodController),
+        Provider<CheckinScheduler>.value(
+          value: CheckinScheduler(
+            notifications: _NoopNotificationService(),
+            now: DateTime.now,
+          ),
+        ),
       ],
       child: MaterialApp(theme: AppTheme.theme, home: child),
     );
@@ -181,4 +225,20 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(fetchCalls, 2);
   });
+}
+
+class _NoopNotificationService implements NotificationService {
+  @override
+  Future<bool> requestPermission() async => false;
+
+  @override
+  Future<void> scheduleDaily({
+    required int id,
+    required TimeOfDay time,
+    required String title,
+    required String body,
+  }) async {}
+
+  @override
+  Future<void> cancel(int id) async {}
 }
