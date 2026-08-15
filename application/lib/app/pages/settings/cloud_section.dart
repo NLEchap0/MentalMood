@@ -184,7 +184,9 @@ class _CloudSectionState extends State<CloudSection> {
         syncKey: session.syncKey,
         dek: dek,
       ),
-      baseUrl: apiBaseUrl(),
+      // Il sync concatena /sync: passiamo l'URL base senza index.php
+      // e il client lo gestisce (HttpSyncClient usa apiEndpoint).
+      baseUrl: apiBaseUrl().replaceAll(RegExp(r'/+$'), ''),
     );
     cloud.setSyncResult(ok
         ? 'Synced ${sync.lastSyncAt?.toIso8601String() ?? ''}'

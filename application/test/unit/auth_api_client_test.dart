@@ -13,6 +13,8 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     await dotenv.load(fileName: '.env');
+    // I test usano sempre l'URL locale di test, mai la produzione.
+    dotenv.env['API_BASE_URL'] = 'http://test.local';
   });
 
   group('AuthApiClient', () {

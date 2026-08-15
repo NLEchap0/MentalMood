@@ -4,8 +4,21 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 /// URL base dell'API. Su emulatore Android 10.0.2.2 = host locale.
+/// Su produzione IONOS senza mod_rewrite gli endpoint vanno chiamati
+/// come /index.php/<endpoint> (la DirectoryIndex gestisce la root).
 String apiBaseUrl() =>
     dotenv.maybeGet('API_BASE_URL') ?? 'http://10.0.2.2:8090';
+
+/// Ritorna l'URL completo per un path API, gestendo il deploy IONOS
+/// senza mod_rewrite (via /index.php/<endpoint>).
+String apiEndpoint(String path) {
+  final base = apiBaseUrl().replaceAll(RegExp(r'/+$'), '');
+  final normalized = path.startsWith('/') ? path : '/$path';
+  if (base.contains('webdevinnovations.ch')) {
+    return '$base/index.php$normalized';
+  }
+  return '$base$normalized';
+}
 
 class CloudApiFailure implements Exception {
   const CloudApiFailure({
@@ -94,7 +107,7 @@ class AuthApiClient {
   }) async {
     return _guard(() async {
       final response = await _client.post(
-        Uri.parse('${apiBaseUrl()}/register'),
+        Uri.parse(apiEndpoint('/register')),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'username': username,
@@ -116,7 +129,7 @@ class AuthApiClient {
   }) async {
     return _guard(() async {
       final response = await _client.post(
-        Uri.parse('${apiBaseUrl()}/login'),
+        Uri.parse(apiEndpoint('/login')),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'username': username, 'password': password}),
       );
@@ -140,7 +153,7 @@ class AuthApiClient {
   Future<SubscriptionInfo> subscription(String accessToken) async {
     return _guard(() async {
       final response = await _client.get(
-        Uri.parse('${apiBaseUrl()}/subscription'),
+        Uri.parse(apiEndpoint('/subscription')),
         headers: {'Authorization': 'Bearer $accessToken'},
       );
       if (response.statusCode == 200) {
@@ -158,7 +171,7 @@ class AuthApiClient {
   }) async {
     return _guard(() async {
       final response = await _client.post(
-        Uri.parse('${apiBaseUrl()}/consent'),
+        Uri.parse(apiEndpoint('/consent')),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $accessToken',
@@ -179,7 +192,7 @@ class AuthApiClient {
   Future<Map<String, dynamic>> exportData(String accessToken) async {
     return _guard(() async {
       final response = await _client.get(
-        Uri.parse('${apiBaseUrl()}/export'),
+        Uri.parse(apiEndpoint('/export')),
         headers: {'Authorization': 'Bearer $accessToken'},
       );
       if (response.statusCode == 200) {
@@ -192,7 +205,7 @@ class AuthApiClient {
   Future<void> deleteAccount(String accessToken) async {
     return _guard(() async {
       final response = await _client.delete(
-        Uri.parse('${apiBaseUrl()}/account'),
+        Uri.parse(apiEndpoint('/account')),
         headers: {'Authorization': 'Bearer $accessToken'},
       );
       if (response.statusCode != 200) {
