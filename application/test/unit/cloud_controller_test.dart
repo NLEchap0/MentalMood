@@ -1,13 +1,18 @@
 import 'dart:convert';
 
+import 'package:application/data/repositories/user_repository.dart';
 import 'package:application/data/secure/secure_key_store.dart';
+import 'package:application/domain/models.dart';
 import 'package:application/domain/services/crypto_service.dart';
 import 'package:application/services/auth_api_client.dart';
+import 'package:application/state/auth_controller.dart';
 import 'package:application/state/cloud_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAuthApiClient extends Mock implements AuthApiClient {}
+
+class MockUserRepository extends Mock implements UserRepository {}
 
 class InMemoryKeyStore implements SecureKeyStore {
   final _map = <String, String>{};
@@ -26,17 +31,34 @@ void main() {
   late MockAuthApiClient api;
   late InMemoryKeyStore store;
   late CryptoService crypto;
+  late MockUserRepository userRepo;
+  late AuthController auth;
   late CloudController controller;
 
   setUp(() {
     api = MockAuthApiClient();
     store = InMemoryKeyStore();
     crypto = CryptoService(pbkdf2Iterations: 1000);
+    userRepo = MockUserRepository();
+    auth = AuthController(userRepository: userRepo);
     controller = CloudController(
       apiClient: api,
       keyStore: store,
       crypto: crypto,
+      userRepository: userRepo,
+      authController: auth,
     );
+    // La cache drift locale è un dettaglio interno: di default l'utente
+    // esiste già, così _syncLocalUser non crea duplicati nei test.
+    when(() => userRepo.getUserByUsername(any())).thenAnswer((_) async =>
+        AppUser(
+          id: 1,
+          username: 'mario',
+          name: 'Mario',
+          surname: 'Mood',
+          birthDate: DateTime(2000),
+          passwordHash: 'cloud-only',
+        ));
     // Default: il refresh conserva la sessione (i test specifici lo
     // sovrascrivono). Evita che restoreSession faccia logout nei test
     // che non riguardano il refresh.
@@ -218,6 +240,7 @@ void main() {
 
     test('ensureFreshSession refreshes when access token rejected', () async {
       when(() => api.refresh('rt_old')).thenAnswer((_) async => AuthSession(
+            id: 1,
             accessToken: 'at_new',
             refreshToken: 'rt_new',
             syncKey: 'k' * 64,
@@ -247,6 +270,7 @@ void main() {
 }
 
 AuthSession _session() => AuthSession(
+      id: 1,
       accessToken: 'at',
       refreshToken: 'rt',
       syncKey: 'k' * 64,

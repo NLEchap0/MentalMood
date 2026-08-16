@@ -37,6 +37,7 @@ class CloudApiFailure implements Exception {
 
 class AuthSession {
   const AuthSession({
+    required this.id,
     required this.accessToken,
     required this.refreshToken,
     required this.syncKey,
@@ -47,6 +48,7 @@ class AuthSession {
     this.currentPeriodEnd,
   });
 
+  final int id;
   final String accessToken;
   final String refreshToken;
   final String syncKey;
@@ -264,6 +266,7 @@ class AuthApiClient {
   AuthSession _sessionFromJson(Map<String, dynamic> data) {
     final user = data['user'] as Map<String, dynamic>;
     return AuthSession(
+      id: (user['id'] as num?)?.toInt() ?? 0,
       accessToken: data['access_token'] as String,
       refreshToken: data['refresh_token'] as String,
       syncKey: data['sync_key'] as String,

@@ -3,8 +3,7 @@ import 'package:application/app/widgets/app_background.dart';
 import 'package:application/app/widgets/app_button.dart';
 import 'package:application/app/widgets/entrance_stagger.dart';
 import 'package:application/app/widgets/refresh_view.dart';
-import 'package:application/state/auth_controller.dart';
-import 'package:application/state/register_controller.dart';
+import 'package:application/state/cloud_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -35,23 +34,19 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
-    final register = context.read<RegisterController>();
-    final user = await register.register(
+    final cloud = context.read<CloudController>();
+    final success = await cloud.registerCloud(
       username: _usernameController.text,
-      name: _nameController.text,
-      surname: _surnameController.text,
       password: _passwordController.text,
-      birthDate: _birthDate,
     );
-    if (user != null && mounted) {
-      await context.read<AuthController>().startSession(user);
-      if (mounted) Navigator.pushReplacementNamed(context, '/home');
+    if (success && mounted) {
+      Navigator.pushReplacementNamed(context, '/home');
     }
   }
 
   /// Pull-to-refresh: if a session already exists, go straight to Home.
   Future<void> _refresh() async {
-    final loggedIn = await context.read<AuthController>().isLoggedIn();
+    final loggedIn = context.read<CloudController>().isConnected;
     if (loggedIn && mounted) {
       Navigator.pushReplacementNamed(context, '/home');
     }
@@ -69,7 +64,14 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.watch<RegisterController>();
+    final controller = context.watch<CloudController>();
+    final errorText = controller.errorCode == null
+        ? null
+        : controller.errorCode == 'network_error'
+            ? 'Server unreachable. Check your connection.'
+            : controller.errorCode == 'username_taken'
+                ? 'Username already taken.'
+                : 'Registration failed. Try again.';
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -209,9 +211,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           validator: (v) =>
                               (v == null || v.length < 4) ? 'Too short' : null,
                         ),
-                        if (controller.errorMessage != null)
+                        if (errorText != null)
                           Text(
-                            controller.errorMessage!,
+                            errorText,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: AppColors.danger,

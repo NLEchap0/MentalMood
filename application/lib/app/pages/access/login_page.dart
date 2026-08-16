@@ -3,7 +3,7 @@ import 'package:application/app/widgets/app_background.dart';
 import 'package:application/app/widgets/app_button.dart';
 import 'package:application/app/widgets/entrance_stagger.dart';
 import 'package:application/app/widgets/refresh_view.dart';
-import 'package:application/state/auth_controller.dart';
+import 'package:application/state/cloud_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -29,10 +29,10 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
-    final controller = context.read<AuthController>();
-    final success = await controller.login(
-      _usernameController.text,
-      _passwordController.text,
+    final controller = context.read<CloudController>();
+    final success = await controller.loginCloud(
+      username: _usernameController.text,
+      password: _passwordController.text,
     );
     if (success && mounted) {
       Navigator.pushReplacementNamed(context, '/home');
@@ -41,7 +41,7 @@ class _LoginPageState extends State<LoginPage> {
 
   /// Pull-to-refresh: if a session already exists, go straight to Home.
   Future<void> _refresh() async {
-    final loggedIn = await context.read<AuthController>().isLoggedIn();
+    final loggedIn = context.read<CloudController>().isConnected;
     if (loggedIn && mounted) {
       Navigator.pushReplacementNamed(context, '/home');
     }
@@ -49,7 +49,12 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.watch<AuthController>();
+    final controller = context.watch<CloudController>();
+    final errorText = controller.errorCode == null
+        ? null
+        : controller.errorCode == 'network_error'
+            ? 'Server unreachable. Check your connection.'
+            : 'Invalid username or password.';
 
     return Scaffold(
       body: AppBackground(
@@ -165,9 +170,9 @@ class _LoginPageState extends State<LoginPage> {
                           validator: (v) =>
                               (v == null || v.isEmpty) ? 'Required' : null,
                         ),
-                        if (controller.errorMessage != null)
+                        if (errorText != null)
                           Text(
-                            controller.errorMessage!,
+                            errorText,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: AppColors.danger,

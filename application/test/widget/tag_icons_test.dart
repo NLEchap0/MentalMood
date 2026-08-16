@@ -6,7 +6,6 @@ import 'package:application/data/repositories/user_repository.dart';
 import 'package:application/domain/models.dart';
 import 'package:application/state/auth_controller.dart';
 import 'package:application/state/mood_controller.dart';
-import 'package:application/state/register_controller.dart';
 import 'package:flutter/material.dart' hide Badge;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -123,10 +122,6 @@ void main() {
           Provider<UserRepository>.value(value: auth.userRepository),
           Provider<EmotionRepository>.value(value: mood.emotionRepository),
           ChangeNotifierProvider<AuthController>.value(value: auth),
-          ChangeNotifierProvider<RegisterController>(
-            create: (_) =>
-                RegisterController(userRepository: auth.userRepository),
-          ),
           ChangeNotifierProvider<MoodController>.value(value: mood),
         ],
         child: MaterialApp(theme: AppTheme.theme, home: const AddMoodPage()),

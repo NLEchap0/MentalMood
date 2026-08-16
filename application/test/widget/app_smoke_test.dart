@@ -13,7 +13,6 @@ import 'package:application/services/sync_service.dart';
 import 'package:application/state/auth_controller.dart';
 import 'package:application/state/cloud_controller.dart';
 import 'package:application/state/mood_controller.dart';
-import 'package:application/state/register_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -84,6 +83,8 @@ void main() {
             apiClient: AuthApiClient(),
             keyStore: InMemoryKeyStore(),
             crypto: CryptoService(pbkdf2Iterations: 1000),
+            userRepository: userRepository,
+            authController: authController,
           ),
         ),
         ChangeNotifierProvider<SyncService>.value(
@@ -92,9 +93,6 @@ void main() {
             httpClient: HttpSyncClient(),
             crypto: CryptoService(pbkdf2Iterations: 1000),
           ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => RegisterController(userRepository: userRepository),
         ),
         ChangeNotifierProvider<MoodController>.value(value: moodController),
         Provider<CheckinScheduler>.value(

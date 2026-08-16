@@ -16,7 +16,6 @@ import 'package:application/services/sync_service.dart';
 import 'package:application/state/auth_controller.dart';
 import 'package:application/state/cloud_controller.dart';
 import 'package:application/state/mood_controller.dart';
-import 'package:application/state/register_controller.dart';
 import 'package:flutter/material.dart' hide Badge;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -196,8 +195,6 @@ void main() {
         Provider<UserRepository>.value(value: auth.userRepository),
         Provider<EmotionRepository>.value(value: mood.emotionRepository),
         ChangeNotifierProvider<AuthController>.value(value: auth),
-        ChangeNotifierProvider<RegisterController>(
-            create: (_) => RegisterController(userRepository: auth.userRepository)),
         ChangeNotifierProvider<MoodController>.value(value: mood),
         Provider<SecureKeyStore>.value(value: _InMemoryKeyStore()),
         Provider<CryptoService>.value(
@@ -207,6 +204,8 @@ void main() {
             apiClient: AuthApiClient(),
             keyStore: _InMemoryKeyStore(),
             crypto: CryptoService(pbkdf2Iterations: 1000),
+            userRepository: auth.userRepository,
+            authController: auth,
           ),
         ),
         ChangeNotifierProvider<SyncService>.value(

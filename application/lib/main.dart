@@ -19,7 +19,6 @@ import 'package:application/services/sync_service.dart';
 import 'package:application/state/auth_controller.dart';
 import 'package:application/state/cloud_controller.dart';
 import 'package:application/state/mood_controller.dart';
-import 'package:application/state/register_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -42,16 +41,16 @@ void main() async {
   final emotionRepository = DriftEmotionRepository(db);
   final authController = AuthController(userRepository: userRepository);
 
-  final bool loggedIn = await authController.isLoggedIn();
-
   final crypto = CryptoService();
   final keyStore = FlutterSecureKeyStore();
   final cloudController = CloudController(
     apiClient: AuthApiClient(),
     keyStore: keyStore,
     crypto: crypto,
+    userRepository: userRepository,
+    authController: authController,
   );
-  await cloudController.restoreSession();
+  final bool loggedIn = await cloudController.restoreSession();
 
   final syncService = SyncService(
     emotionRepository: emotionRepository,
@@ -73,9 +72,6 @@ void main() async {
         ChangeNotifierProvider<SyncService>.value(value: syncService),
         ChangeNotifierProvider(
           create: (_) => AiController(apiClient: HttpAiApiClient()),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => RegisterController(userRepository: userRepository),
         ),
         ChangeNotifierProvider(
           create: (_) => MoodController(emotionRepository: emotionRepository),

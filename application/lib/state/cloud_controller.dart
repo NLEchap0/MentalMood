@@ -1,25 +1,35 @@
 import 'dart:convert';
 
+import 'package:application/data/repositories/user_repository.dart';
 import 'package:application/data/secure/secure_key_store.dart';
 import 'package:application/domain/services/crypto_service.dart';
 import 'package:application/services/auth_api_client.dart';
+import 'package:application/state/auth_controller.dart';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/foundation.dart';
 
 /// Gestisce la sessione cloud (login/register verso l'API), lo stato
 /// dell'abbonamento e il consenso AI. La sessione vive in flutter_secure_storage.
+/// L'account cloud è l'UNICO account: dopo l'autenticazione sincronizza
+/// la cache drift locale (stesso username) per le mood entries.
 class CloudController extends ChangeNotifier {
   CloudController({
     required AuthApiClient apiClient,
     required SecureKeyStore keyStore,
     required CryptoService crypto,
+    required UserRepository userRepository,
+    required AuthController authController,
   })  : _api = apiClient,
         _store = keyStore,
-        _crypto = crypto;
+        _crypto = crypto,
+        _userRepository = userRepository,
+        _authController = authController;
 
   final AuthApiClient _api;
   final SecureKeyStore _store;
   final CryptoService _crypto;
+  final UserRepository _userRepository;
+  final AuthController _authController;
 
   AuthSession? _session;
   AuthSession? get session => _session;
@@ -86,21 +96,10 @@ class CloudController extends ChangeNotifier {
       final session = await _api.login(username: username, password: password);
 
       // Recupera salt + wrapped DEK dal server per derivare la DEK locale.
-      final export = await _api.exportData(session.accessToken);
-      final salt = export['kek_salt'] as String?;
-      final wrappedB64 = export['wrapped_dek'] as String?;
-      if (salt != null && wrappedB64 != null) {
-        final kek = await _crypto.deriveKek(
-          password: password,
-          salt: _hexToBytes(salt),
-        );
-        final dek = await _crypto.unwrapDek(
-          wrappedDek: base64Decode(wrappedB64),
-          kek: kek,
-        );
-        await _store.write('cloud_kek_salt', salt);
-        await _store.write('cloud_dek', _bytesToHex(await dek.extractBytes()));
-      }
+      // Se la DEK non è disponibile (es. account registrato da un altro
+      // client con dati incompleti) il login riesce comunque: solo il sync
+      // E2EE non sarà disponibile finché la chiave non viene rigenerata.
+      await _restoreDek(session, password);
 
       await _persistSession(session);
       _setLoading(false);
@@ -112,6 +111,27 @@ class CloudController extends ChangeNotifier {
     }
   }
 
+  Future<void> _restoreDek(AuthSession session, String password) async {
+    try {
+      final export = await _api.exportData(session.accessToken);
+      final salt = export['kek_salt'] as String?;
+      final wrappedB64 = export['wrapped_dek'] as String?;
+      if (salt == null || wrappedB64 == null) return;
+      final kek = await _crypto.deriveKek(
+        password: password,
+        salt: _hexToBytes(salt),
+      );
+      final dek = await _crypto.unwrapDek(
+        wrappedDek: base64Decode(wrappedB64),
+        kek: kek,
+      );
+      await _store.write('cloud_kek_salt', salt);
+      await _store.write('cloud_dek', _bytesToHex(await dek.extractBytes()));
+    } catch (e) {
+      debugPrint('CloudController: DEK restore skipped: $e');
+    }
+  }
+
   Future<bool> restoreSession() async {
     final username = await _store.read('cloud_username');
     final accessToken = await _store.read('cloud_access_token');
@@ -119,6 +139,7 @@ class CloudController extends ChangeNotifier {
     final syncKey = await _store.read('cloud_sync_key');
     if (username == null || accessToken == null) return false;
     _session = AuthSession(
+      id: int.tryParse(await _store.read('cloud_user_id') ?? '') ?? 0,
       accessToken: accessToken,
       refreshToken: refreshToken ?? '',
       syncKey: syncKey ?? '',
@@ -127,6 +148,7 @@ class CloudController extends ChangeNotifier {
       status: await _store.read('cloud_status') ?? 'none',
     );
     _consentEnabled = await _store.read('cloud_consent') == 'true';
+    await _syncLocalUser(_session!);
     notifyListeners();
     // Il token salvato può essere scaduto: prova a ruotarlo subito.
     if (refreshToken != null && refreshToken.isNotEmpty) {
@@ -141,6 +163,7 @@ class CloudController extends ChangeNotifier {
     _consentEnabled = false;
     for (final key in [
       'cloud_username',
+      'cloud_user_id',
       'cloud_access_token',
       'cloud_refresh_token',
       'cloud_sync_key',
@@ -152,6 +175,7 @@ class CloudController extends ChangeNotifier {
     ]) {
       await _store.delete(key);
     }
+    await _authController.logout();
     notifyListeners();
   }
 
@@ -261,6 +285,7 @@ class CloudController extends ChangeNotifier {
   Future<void> _persistSession(AuthSession session) async {
     _session = session;
     await _store.write('cloud_username', session.username);
+    await _store.write('cloud_user_id', session.id.toString());
     await _store.write('cloud_access_token', session.accessToken);
     await _store.write('cloud_refresh_token', session.refreshToken);
     await _store.write('cloud_sync_key', session.syncKey);
@@ -268,7 +293,30 @@ class CloudController extends ChangeNotifier {
     await _store.write('cloud_status', session.status);
     _consentEnabled = false;
     await _store.write('cloud_consent', 'false');
+    await _syncLocalUser(session);
     notifyListeners();
+  }
+
+  /// L'account cloud è l'unico: mantiene la cache drift (stesso username)
+  /// per le mood entries e le badge, senza mai autenticare localmente.
+  Future<void> _syncLocalUser(AuthSession session) async {
+    try {
+      final existing = await _userRepository.getUserByUsername(session.username);
+      if (existing != null) {
+        await _authController.startSession(existing);
+        return;
+      }
+      final user = await _userRepository.createUser(
+        username: session.username,
+        name: session.username,
+        surname: '',
+        password: 'cloud-only',
+        birthDate: DateTime(2000),
+      );
+      await _authController.startSession(user);
+    } catch (e) {
+      debugPrint('CloudController: sync local user failed: $e');
+    }
   }
 
   void _setLoading(bool value) {
