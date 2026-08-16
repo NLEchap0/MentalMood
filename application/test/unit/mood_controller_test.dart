@@ -9,10 +9,16 @@ class MockEmotionRepository extends Mock implements EmotionRepository {}
 void main() {
   late MoodController moodController;
   late MockEmotionRepository mockEmotionRepository;
+  // Clock fisso per eliminare il flaky da mezzanotte: i test usano sempre
+  // lo stesso "adesso", qualunque sia l'ora reale.
+  final fixedNow = DateTime(2026, 6, 15, 12);
 
   setUp(() {
     mockEmotionRepository = MockEmotionRepository();
-    moodController = MoodController(emotionRepository: mockEmotionRepository);
+    moodController = MoodController(
+      emotionRepository: mockEmotionRepository,
+      now: () => fixedNow,
+    );
 
     when(
       () => mockEmotionRepository.getEmotionsForUser(any()),
@@ -46,7 +52,7 @@ void main() {
     });
 
     test('Streak is 1 when only today is recorded', () async {
-      final now = DateTime.now();
+      final now = fixedNow;
       when(
         () => mockEmotionRepository.getEmotionsForUser(1),
       ).thenAnswer((_) async => [entry(1, 5, now)]);
@@ -56,7 +62,7 @@ void main() {
     });
 
     test('Longest streak is correctly calculated', () async {
-      final now = DateTime.now();
+      final now = fixedNow;
       when(() => mockEmotionRepository.getEmotionsForUser(1)).thenAnswer(
         (_) async => [
           entry(1, 5, now),
@@ -92,7 +98,7 @@ void main() {
         ),
       ).thenAnswer((_) async {});
 
-      final now = DateTime.now();
+      final now = fixedNow;
       when(() => mockEmotionRepository.getEmotionsForUser(1)).thenAnswer(
         (_) async => [
           entry(3, 5, now),
@@ -117,7 +123,7 @@ void main() {
 
   group('MoodController Chart & Data Processing', () {
     test('Calculates today average correctly', () async {
-      final now = DateTime.now();
+      final now = fixedNow;
       when(() => mockEmotionRepository.getEmotionsForUser(1)).thenAnswer(
         (_) async => [
           entry(1, 10, now),
@@ -131,7 +137,7 @@ void main() {
     });
 
     test('Provides correct status label for today', () async {
-      final now = DateTime.now();
+      final now = fixedNow;
       when(
         () => mockEmotionRepository.getEmotionsForUser(1),
       ).thenAnswer((_) async => [entry(1, 10, now)]);
@@ -144,7 +150,7 @@ void main() {
     test(
       'Chart data for 24h range includes entries from yesterday evening',
       () async {
-        final now = DateTime.now();
+        final now = fixedNow;
         final lateLastNight = DateTime(
           now.year,
           now.month,

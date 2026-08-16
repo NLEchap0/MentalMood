@@ -138,31 +138,46 @@ class SyncService extends ChangeNotifier {
     List<MoodEntry> local,
   ) async {
     for (final record in pull.pulled) {
-      final idMatch = RegExp(r'^emotion:(\d+)$').firstMatch(record.recordKey);
-      if (idMatch == null) continue;
-      final id = int.parse(idMatch.group(1)!);
-
-      if (record.deleted) {
-        await _emotionRepository.deleteEmotion(id);
-        continue;
+      try {
+        await _applyPull(record, userId, dek, local);
+      } catch (e) {
+        // Un record corrotto (payload non decriptabile, JSON invalido) non
+        // deve bloccare l'intero sync: si salta e si continua con gli altri.
+        debugPrint('Sync: skipped record ${record.recordKey}: $e');
       }
-      if (record.payload == null) continue;
-      if (_findEmotionById(id, local) != null) continue;
-
-      final payload = EncryptedPayload.fromBytes(base64Decode(record.payload!));
-      final plain = _crypto.decryptString(payload, dek);
-      final data = jsonDecode(plain) as Map<String, dynamic>;
-
-      await _emotionRepository.addEmotion(
-        userId: userId,
-        value: (data['value'] as num).toInt(),
-        note: data['note'] as String?,
-        tags: (data['tags'] as List<dynamic>? ?? [])
-            .map((e) => e as String)
-            .toList(),
-        createdAt: DateTime.parse(data['createdAt'] as String).toUtc(),
-      );
     }
+  }
+
+  Future<void> _applyPull(
+    SyncRecord record,
+    int userId,
+    SecretKey dek,
+    List<MoodEntry> local,
+  ) async {
+    final idMatch = RegExp(r'^emotion:(\d+)$').firstMatch(record.recordKey);
+    if (idMatch == null) return;
+    final id = int.parse(idMatch.group(1)!);
+
+    if (record.deleted) {
+      await _emotionRepository.deleteEmotion(id);
+      return;
+    }
+    if (record.payload == null) return;
+    if (_findEmotionById(id, local) != null) return;
+
+    final payload = EncryptedPayload.fromBytes(base64Decode(record.payload!));
+    final plain = _crypto.decryptString(payload, dek);
+    final data = jsonDecode(plain) as Map<String, dynamic>;
+
+    await _emotionRepository.addEmotion(
+      userId: userId,
+      value: (data['value'] as num).toInt(),
+      note: data['note'] as String?,
+      tags: (data['tags'] as List<dynamic>? ?? [])
+          .map((e) => e as String)
+          .toList(),
+      createdAt: DateTime.parse(data['createdAt'] as String).toUtc(),
+    );
   }
 
   MoodEntry? _findEmotionById(int id, List<MoodEntry> local) {

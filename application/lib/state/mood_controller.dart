@@ -12,8 +12,10 @@ class MoodController extends ChangeNotifier {
   final EmotionRepository emotionRepository;
   final MoodAnalytics _analytics = const MoodAnalytics();
   final BadgeService _badgeService = const BadgeService();
+  final DateTime Function() _now;
 
-  MoodController({required this.emotionRepository});
+  MoodController({required this.emotionRepository, DateTime Function()? now})
+      : _now = now ?? DateTime.now;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -75,7 +77,7 @@ class MoodController extends ChangeNotifier {
 
       // Auto-fallback: promote to week view once a week has enough data.
       if (!_manuallySelected) {
-        final now = DateTime.now();
+        final now = _now();
         final weekCutoff = DateTime(
           now.year,
           now.month,
@@ -114,6 +116,7 @@ class MoodController extends ChangeNotifier {
       final drafts = _badgeService.evaluate(
         _moodHistory,
         unlockedCodes: _unlockedBadges.map((b) => b.code).toSet(),
+        now: _now(),
       );
       for (final draft in drafts) {
         await emotionRepository.unlockBadge(
@@ -134,14 +137,14 @@ class MoodController extends ChangeNotifier {
 
   // --- ANALYTICS (delegated to the pure MoodAnalytics service) ---
 
-  double? getTodayAverage() => _analytics.todayAverage(_moodHistory);
+  double? getTodayAverage() => _analytics.todayAverage(_moodHistory, now: _now());
 
-  String getTodayStatusLabel() => _analytics.todayStatusLabel(_moodHistory);
+  String getTodayStatusLabel() => _analytics.todayStatusLabel(_moodHistory, now: _now());
 
   List<ChartPoint> getChartData() =>
-      _analytics.chartData(_moodHistory, _selectedRange);
+      _analytics.chartData(_moodHistory, _selectedRange, now: _now());
 
-  int getStreak() => _analytics.streak(_moodHistory);
+  int getStreak() => _analytics.streak(_moodHistory, now: _now());
 
   int getLongestStreak() => _analytics.longestStreak(_moodHistory);
 
@@ -149,27 +152,27 @@ class MoodController extends ChangeNotifier {
 
   // --- WEEKLY STATS (with previous-week comparison) ---
 
-  double? getWeekAverage() => _analytics.weekAverage(_moodHistory);
+  double? getWeekAverage() => _analytics.weekAverage(_moodHistory, now: _now());
 
   double? getPreviousWeekAverage() =>
-      _analytics.weekAverage(_moodHistory, weeksBack: 1);
+      _analytics.weekAverage(_moodHistory, weeksBack: 1, now: _now());
 
   double? getWeekAverageChange() =>
       MoodAnalytics.percentChange(getWeekAverage(), getPreviousWeekAverage());
 
-  int getWeekCount() => _analytics.weekCount(_moodHistory);
+  int getWeekCount() => _analytics.weekCount(_moodHistory, now: _now());
 
   int getPreviousWeekCount() =>
-      _analytics.weekCount(_moodHistory, weeksBack: 1);
+      _analytics.weekCount(_moodHistory, weeksBack: 1, now: _now());
 
   double? getWeekCountChange() => MoodAnalytics.percentChange(
     getWeekCount().toDouble(),
     getPreviousWeekCount().toDouble(),
   );
 
-  int? getWeekPeak() => _analytics.weekPeak(_moodHistory);
+  int? getWeekPeak() => _analytics.weekPeak(_moodHistory, now: _now());
 
-  int? getPreviousWeekPeak() => _analytics.weekPeak(_moodHistory, weeksBack: 1);
+  int? getPreviousWeekPeak() => _analytics.weekPeak(_moodHistory, weeksBack: 1, now: _now());
 
   /// Point difference (this week vs previous week), null when not comparable.
   int? getWeekPeakDelta() {
@@ -223,7 +226,7 @@ class MoodController extends ChangeNotifier {
 
   Future<void> seedMockData(int userId) async {
     final random = Random();
-    final now = DateTime.now();
+    final now = _now();
     for (int i = 60; i >= 0; i--) {
       final entriesPerDay = random.nextInt(3) + 1;
       for (int j = 0; j < entriesPerDay; j++) {

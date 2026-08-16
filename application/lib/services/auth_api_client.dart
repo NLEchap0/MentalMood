@@ -3,14 +3,14 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
-/// URL base dell'API. Su emulatore Android 10.0.2.2 = host locale.
+/// URL base dell'API. Su emulatore Android `10.0.2.2` = host locale.
 /// Su produzione IONOS senza mod_rewrite gli endpoint vanno chiamati
-/// come /index.php/<endpoint> (la DirectoryIndex gestisce la root).
+/// come `/index.php/<endpoint>` (la DirectoryIndex gestisce la root).
 String apiBaseUrl() =>
     dotenv.maybeGet('API_BASE_URL') ?? 'http://10.0.2.2:8090';
 
 /// Ritorna l'URL completo per un path API, gestendo il deploy IONOS
-/// senza mod_rewrite (via /index.php/<endpoint>).
+/// senza mod_rewrite (via `/index.php/<endpoint>`).
 String apiEndpoint(String path) {
   final base = apiBaseUrl().replaceAll(RegExp(r'/+$'), '');
   final normalized = path.startsWith('/') ? path : '/$path';
