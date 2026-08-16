@@ -1,4 +1,5 @@
 import 'package:application/app/pages/settings/cloud_section.dart';
+import 'package:application/app/pages/settings/tools_section.dart';
 import 'package:application/app/theme/app_colors.dart';
 import 'package:application/app/widgets/app_background.dart';
 import 'package:application/app/widgets/app_button.dart';
@@ -349,6 +350,12 @@ class _SettingsPageState extends State<SettingsPage> {
                     Padding(
                       padding: const EdgeInsets.only(top: 12),
                       child: const CloudSection(),
+                    ),
+                    const SizedBox(height: 40),
+                    const SectionHeader(title: 'Tools & AI'),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: const ToolsSection(),
                     ),
                     const SizedBox(height: 40),
                     const SectionHeader(title: 'Account'),

@@ -134,16 +134,25 @@ class AuthApiClient {
         body: jsonEncode({'username': username, 'password': password}),
       );
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final user = data['user'] as Map<String, dynamic>;
-        return AuthSession(
-          accessToken: data['access_token'] as String,
-          refreshToken: data['refresh_token'] as String,
-          syncKey: data['sync_key'] as String,
-          username: user['username'] as String,
-          plan: user['plan'] as String? ?? 'free',
-          status: user['subscription_status'] as String? ?? 'none',
-          trialEndsAt: _parseDate(user['trial_ends_at'] as String?),
+        return _sessionFromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
+        );
+      }
+      throw _failure(response);
+    });
+  }
+
+  /// Ruota i token: il server revoca il refresh usato e ne emette uno nuovo.
+  Future<AuthSession> refresh(String refreshToken) async {
+    return _guard(() async {
+      final response = await _client.post(
+        Uri.parse(apiEndpoint('/refresh')),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refresh_token': refreshToken}),
+      );
+      if (response.statusCode == 200) {
+        return _sessionFromJson(
+          jsonDecode(response.body) as Map<String, dynamic>,
         );
       }
       throw _failure(response);
@@ -250,5 +259,18 @@ class AuthApiClient {
   DateTime? _parseDate(String? v) {
     if (v == null) return null;
     return DateTime.tryParse(v);
+  }
+
+  AuthSession _sessionFromJson(Map<String, dynamic> data) {
+    final user = data['user'] as Map<String, dynamic>;
+    return AuthSession(
+      accessToken: data['access_token'] as String,
+      refreshToken: data['refresh_token'] as String,
+      syncKey: data['sync_key'] as String,
+      username: user['username'] as String,
+      plan: user['plan'] as String? ?? 'free',
+      status: user['subscription_status'] as String? ?? 'none',
+      trialEndsAt: _parseDate(user['trial_ends_at'] as String?),
+    );
   }
 }

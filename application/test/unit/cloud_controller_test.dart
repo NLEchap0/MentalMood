@@ -37,6 +37,10 @@ void main() {
       keyStore: store,
       crypto: crypto,
     );
+    // Default: il refresh conserva la sessione (i test specifici lo
+    // sovrascrivono). Evita che restoreSession faccia logout nei test
+    // che non riguardano il refresh.
+    when(() => api.refresh(any())).thenAnswer((_) async => _session());
   });
 
   group('CloudController register', () {
@@ -197,6 +201,47 @@ void main() {
       final ok = await controller.setAiConsent(true);
       expect(ok, true);
       expect(controller.consentEnabled, true);
+    });
+  });
+
+  group('CloudController token refresh', () {
+    Future<void> seedSession() async {
+      await store.write('cloud_username', 'mario');
+      await store.write('cloud_access_token', 'expired_at');
+      await store.write('cloud_refresh_token', 'rt_old');
+      await store.write('cloud_sync_key', 'k' * 64);
+      await store.write('cloud_dek', 'd' * 64);
+      await store.write('cloud_plan', 'free');
+      await store.write('cloud_status', 'none');
+      await controller.restoreSession();
+    }
+
+    test('ensureFreshSession refreshes when access token rejected', () async {
+      when(() => api.refresh('rt_old')).thenAnswer((_) async => AuthSession(
+            accessToken: 'at_new',
+            refreshToken: 'rt_new',
+            syncKey: 'k' * 64,
+            username: 'mario',
+            plan: 'free',
+            status: 'none',
+          ));
+      await seedSession(); // scrive lo store e ripristina -> refresh automatico
+
+      expect(controller.session!.accessToken, 'at_new');
+      expect(controller.session!.refreshToken, 'rt_new');
+      expect(await store.read('cloud_access_token'), 'at_new');
+      expect(await store.read('cloud_refresh_token'), 'rt_new');
+    });
+
+    test('ensureFreshSession logs out when refresh fails', () async {
+      when(() => api.refresh('rt_old')).thenThrow(const CloudApiFailure(
+          statusCode: 401, code: 'auth_error', message: ''));
+      await seedSession(); // restoreSession fallisce -> logout
+
+      final fresh = await controller.ensureFreshSession();
+      expect(fresh, false);
+      expect(controller.session, isNull);
+      expect(await store.read('cloud_access_token'), isNull);
     });
   });
 }

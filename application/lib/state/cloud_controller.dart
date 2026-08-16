@@ -128,7 +128,11 @@ class CloudController extends ChangeNotifier {
     );
     _consentEnabled = await _store.read('cloud_consent') == 'true';
     notifyListeners();
-    return true;
+    // Il token salvato può essere scaduto: prova a ruotarlo subito.
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await ensureFreshSession();
+    }
+    return _session != null;
   }
 
   Future<void> logoutCloud() async {
@@ -151,6 +155,30 @@ class CloudController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Garantisce un access token valido: se il refresh token è presente e
+  /// la sessione è stata ripristinata, ruota i token via /refresh.
+  /// Ritorna false (e fa logout) se il refresh fallisce.
+  Future<bool> ensureFreshSession() async {
+    final session = _session;
+    if (session == null) return false;
+    if (session.refreshToken.isEmpty) return true;
+    try {
+      final fresh = await _api.refresh(session.refreshToken);
+      _session = fresh;
+      await _store.write('cloud_username', fresh.username);
+      await _store.write('cloud_access_token', fresh.accessToken);
+      await _store.write('cloud_refresh_token', fresh.refreshToken);
+      await _store.write('cloud_sync_key', fresh.syncKey);
+      await _store.write('cloud_plan', fresh.plan);
+      await _store.write('cloud_status', fresh.status);
+      notifyListeners();
+      return true;
+    } on CloudApiFailure {
+      await logoutCloud();
+      return false;
+    }
+  }
+
   Future<bool> refreshSubscription() async {
     final session = _session;
     if (session == null) return false;
@@ -159,6 +187,9 @@ class CloudController extends ChangeNotifier {
       notifyListeners();
       return true;
     } on CloudApiFailure catch (e) {
+      if (e.statusCode == 401 && await ensureFreshSession()) {
+        return refreshSubscription();
+      }
       _errorCode = e.code;
       return false;
     }
@@ -177,6 +208,9 @@ class CloudController extends ChangeNotifier {
       notifyListeners();
       return true;
     } on CloudApiFailure catch (e) {
+      if (e.statusCode == 401 && await ensureFreshSession()) {
+        return setAiConsent(consent);
+      }
       _errorCode = e.code;
       return false;
     }
@@ -190,6 +224,9 @@ class CloudController extends ChangeNotifier {
       await logoutCloud();
       return true;
     } on CloudApiFailure catch (e) {
+      if (e.statusCode == 401 && await ensureFreshSession()) {
+        return deleteCloudAccount();
+      }
       _errorCode = e.code;
       return false;
     }
@@ -201,6 +238,9 @@ class CloudController extends ChangeNotifier {
     try {
       return await _api.exportData(session.accessToken);
     } on CloudApiFailure catch (e) {
+      if (e.statusCode == 401 && await ensureFreshSession()) {
+        return exportCloudData();
+      }
       _errorCode = e.code;
       return null;
     }

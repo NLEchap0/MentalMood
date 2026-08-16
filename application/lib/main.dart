@@ -11,6 +11,8 @@ import 'package:application/data/repositories/user_repository.dart';
 import 'package:application/data/secure/secure_key_store.dart';
 import 'package:application/domain/services/crypto_service.dart';
 import 'package:application/services/auth_api_client.dart';
+import 'package:application/services/ai_api_client.dart';
+import 'package:application/services/ai_controller.dart';
 import 'package:application/services/checkin_scheduler.dart';
 import 'package:application/services/sync_http_client.dart';
 import 'package:application/services/sync_service.dart';
@@ -69,6 +71,9 @@ void main() async {
           value: cloudController,
         ),
         ChangeNotifierProvider<SyncService>.value(value: syncService),
+        ChangeNotifierProvider(
+          create: (_) => AiController(apiClient: HttpAiApiClient()),
+        ),
         ChangeNotifierProvider(
           create: (_) => RegisterController(userRepository: userRepository),
         ),
