@@ -6,6 +6,7 @@ import 'package:application/app/pages/journal/add_mood_page.dart';
 import 'package:application/app/pages/journal/mood_history_page.dart';
 import 'package:application/app/pages/growth/zen_mode_page.dart';
 import 'package:application/app/pages/settings/settings_page.dart';
+import 'package:application/app/pages/tools/tools_page.dart';
 import 'package:application/app/theme/app_colors.dart';
 import 'package:application/app/theme/animations.dart';
 import 'package:application/app/widgets/app_button.dart';
@@ -28,6 +29,7 @@ class _MainNavigationContainerState extends State<MainNavigationContainer> {
   static const List<Widget> _pages = [
     HomePage(),
     MoodHistoryPage(),
+    ToolsPage(),
     SettingsPage(),
   ];
 
@@ -100,6 +102,19 @@ class _MainNavigationContainerState extends State<MainNavigationContainer> {
                 size: 22,
               ),
               label: 'Journal',
+            ),
+            NavigationDestination(
+              icon: Icon(
+                Icons.widgets_outlined,
+                color: Colors.white54,
+                size: 22,
+              ),
+              selectedIcon: Icon(
+                Icons.widgets_rounded,
+                color: AppColors.accent,
+                size: 22,
+              ),
+              label: 'Tools',
             ),
             NavigationDestination(
               icon: Icon(
