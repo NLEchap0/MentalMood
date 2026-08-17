@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:application/app/pages/settings/subscription_page.dart';
 import 'package:application/app/theme/app_colors.dart';
 import 'package:application/app/widgets/app_button.dart';
 import 'package:application/app/widgets/glass_card.dart';
@@ -95,12 +96,20 @@ class _CloudSectionState extends State<CloudSection> {
       _Row(
         title: 'Subscription',
         subtitle: sub == null
-            ? 'Tap to refresh'
+            ? 'Tap to manage your plan'
             : '${sub.plan} · ${sub.status} · ${sub.aiCredits} AI credits',
         icon: Icons.workspace_premium_outlined,
         color: AppColors.gold,
         onTap: () async {
           await cloud.refreshSubscription();
+          if (context.mounted) {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const SubscriptionPage(),
+              ),
+            );
+          }
         },
       ),
       const Divider(indent: 64),
@@ -264,6 +273,7 @@ class _CloudSectionState extends State<CloudSection> {
     CloudController cloud,
   ) async {
     final username = TextEditingController();
+    final email = TextEditingController();
     final password = TextEditingController();
     var mode = 'login'; // 'login' | 'register'
     await showModalBottomSheet<void>(
@@ -296,6 +306,14 @@ class _CloudSectionState extends State<CloudSection> {
                 decoration: const InputDecoration(labelText: 'Username'),
               ),
               const SizedBox(height: 12),
+              if (mode == 'register') ...[
+                TextField(
+                  controller: email,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                ),
+                const SizedBox(height: 12),
+              ],
               TextField(
                 controller: password,
                 obscureText: true,
@@ -320,6 +338,7 @@ class _CloudSectionState extends State<CloudSection> {
                         )
                       : await cloud.registerCloud(
                           username: username.text.trim(),
+                          email: email.text.trim(),
                           password: password.text,
                         );
                   if (ok && ctx.mounted) {

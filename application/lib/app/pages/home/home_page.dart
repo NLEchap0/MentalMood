@@ -1,3 +1,4 @@
+import 'package:application/app/pages/home/wellness_section.dart';
 import 'package:application/app/navigation/app_navigator.dart';
 import 'package:application/app/pages/growth/achievements_page.dart';
 import 'package:application/app/pages/growth/streak_stats_page.dart';
@@ -72,6 +73,10 @@ class HomePage extends StatelessWidget {
                         child: SectionHeader(title: 'Recent Activity'),
                       ),
                       _buildRecentActivity(context, moodController),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8),
+                        child: WellnessSection(),
+                      ),
                     ],
                   ),
                 ),

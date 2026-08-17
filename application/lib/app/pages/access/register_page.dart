@@ -18,6 +18,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _nameController = TextEditingController();
   final _surnameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -26,6 +27,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void dispose() {
     _usernameController.dispose();
+    _emailController.dispose();
     _nameController.dispose();
     _surnameController.dispose();
     _passwordController.dispose();
@@ -37,6 +39,7 @@ class _RegisterPageState extends State<RegisterPage> {
     final cloud = context.read<CloudController>();
     final success = await cloud.registerCloud(
       username: _usernameController.text,
+      email: _emailController.text.trim(),
       password: _passwordController.text,
     );
     if (success && mounted) {
@@ -115,6 +118,28 @@ class _RegisterPageState extends State<RegisterPage> {
                           validator: (v) => (v == null || v.trim().isEmpty)
                               ? 'Required'
                               : null,
+                        ),
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          style: const TextStyle(color: AppColors.textPrimary),
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            prefixIcon: Icon(
+                              Icons.mail_outline_rounded,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) {
+                              return 'Required';
+                            }
+                            final ok = RegExp(
+                              r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                            ).hasMatch(v.trim());
+                            return ok ? null : 'Enter a valid email';
+                          },
                         ),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,

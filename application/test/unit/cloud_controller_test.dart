@@ -71,6 +71,7 @@ void main() {
       when(() => api.register(
             username: any(named: 'username'),
             password: any(named: 'password'),
+            email: any(named: 'email'),
             kekSalt: any(named: 'kekSalt'),
             wrappedDek: any(named: 'wrappedDek'),
           )).thenAnswer((inv) async {
@@ -87,6 +88,7 @@ void main() {
 
       final ok = await controller.registerCloud(
         username: 'mario',
+        email: 'mario@example.com',
         password: 'password123',
       );
 

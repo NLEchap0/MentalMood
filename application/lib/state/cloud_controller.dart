@@ -31,6 +31,9 @@ class CloudController extends ChangeNotifier {
   final UserRepository _userRepository;
   final AuthController _authController;
 
+  /// Espone il client API (es. per checkout/piani).
+  AuthApiClient get api => _api;
+
   AuthSession? _session;
   AuthSession? get session => _session;
 
@@ -59,6 +62,7 @@ class CloudController extends ChangeNotifier {
   Future<bool> registerCloud({
     required String username,
     required String password,
+    required String email,
   }) async {
     _setLoading(true);
     try {
@@ -71,6 +75,7 @@ class CloudController extends ChangeNotifier {
       await _api.register(
         username: username,
         password: password,
+        email: email,
         kekSalt: salt,
         wrappedDek: base64Encode(wrapped),
       );
@@ -235,6 +240,18 @@ class CloudController extends ChangeNotifier {
       if (e.statusCode == 401 && await ensureFreshSession()) {
         return setAiConsent(consent);
       }
+      _errorCode = e.code;
+      return false;
+    }
+  }
+
+  /// Richiede il reset password: il server invia un'email all'indirizzo
+  /// dell'account (se presente). Risponde sempre ok (anti-enumeration).
+  Future<bool> requestPasswordReset(String identifier) async {
+    try {
+      await _api.requestPasswordReset(identifier);
+      return true;
+    } on CloudApiFailure catch (e) {
       _errorCode = e.code;
       return false;
     }

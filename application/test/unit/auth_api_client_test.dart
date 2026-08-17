@@ -60,7 +60,7 @@ void main() {
       );
     });
 
-    test('register sends kek_salt and wrapped_dek', () async {
+    test('register sends kek_salt, email and wrapped_dek', () async {
       late http.Request captured;
       final client = MockClient((request) async {
         captured = request;
@@ -70,12 +70,14 @@ void main() {
       await api.register(
         username: 'mario',
         password: 'pw',
+        email: 'mario@example.com',
         kekSalt: 'a' * 32,
         wrappedDek: 'b64',
       );
       final body = jsonDecode(captured.body) as Map<String, dynamic>;
       expect(body['kek_salt'], 'a' * 32);
       expect(body['wrapped_dek'], 'b64');
+      expect(body['email'], 'mario@example.com');
     });
 
     test('subscription parses info', () async {
@@ -142,6 +144,42 @@ void main() {
             .having((e) => e.statusCode, 'statusCode', 0)
             .having((e) => e.code, 'code', 'network_error')),
       );
+    });
+
+    test('checkout posts plan and returns checkout url', () async {
+      late http.Request captured;
+      final client = MockClient((request) async {
+        captured = request;
+        return http.Response(
+          '{"checkout_url":"https://checkout.stripe.com/c/pay/cs_test"}',
+          200,
+        );
+      });
+      final api = AuthApiClient(client: client);
+      final url = await api.checkout(
+        accessToken: 'at',
+        plan: 'standard',
+        email: 'mario@example.com',
+      );
+      expect(url, contains('checkout.stripe.com'));
+      expect(captured.url.path, '/checkout');
+      expect(captured.headers['Authorization'], 'Bearer at');
+      final body = jsonDecode(captured.body) as Map<String, dynamic>;
+      expect(body['plan'], 'standard');
+      expect(body['email'], 'mario@example.com');
+    });
+
+    test('requestPasswordReset posts identifier and tolerates 200', () async {
+      late http.Request captured;
+      final client = MockClient((request) async {
+        captured = request;
+        return http.Response('{"ok":true}', 200);
+      });
+      final api = AuthApiClient(client: client);
+      await api.requestPasswordReset('mario@example.com');
+      expect(captured.url.path, '/forgot-password');
+      final body = jsonDecode(captured.body) as Map<String, dynamic>;
+      expect(body['identifier'], 'mario@example.com');
     });
   });
 }

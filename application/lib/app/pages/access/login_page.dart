@@ -192,6 +192,13 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.pushNamed(context, '/register'),
                           child: const Text('New here? Create an account'),
                         ),
+                        TextButton(
+                          onPressed: () => _showForgotPassword(context),
+                          child: const Text(
+                            'Forgot password?',
+                            style: TextStyle(color: AppColors.textFaint),
+                          ),
+                        ),
                         const SizedBox(height: 32),
                       ],
                     ),
@@ -203,5 +210,53 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _showForgotPassword(BuildContext context) async {
+    final identifier = TextEditingController();
+    final sent = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reset password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Inserisci il tuo username o la tua email: ti invieremo '
+              'un link per reimpostare la password.',
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: identifier,
+              decoration: const InputDecoration(labelText: 'Username o email'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annulla'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final cloud = context.read<CloudController>();
+              await cloud.requestPasswordReset(identifier.text.trim());
+              if (ctx.mounted) Navigator.pop(ctx, true);
+            },
+            child: const Text('Invia'),
+          ),
+        ],
+      ),
+    );
+    if (sent == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Se l\'account esiste, riceverai un\'email con il link '
+            'per resettare la password.',
+          ),
+        ),
+      );
+    }
   }
 }

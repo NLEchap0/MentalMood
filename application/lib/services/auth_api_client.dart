@@ -104,6 +104,7 @@ class AuthApiClient {
   Future<Map<String, dynamic>> register({
     required String username,
     required String password,
+    required String email,
     required String kekSalt,
     required String wrappedDek,
   }) async {
@@ -114,6 +115,7 @@ class AuthApiClient {
         body: jsonEncode({
           'username': username,
           'password': password,
+          'email': email,
           'kek_salt': kekSalt,
           'wrapped_dek': wrappedDek,
         }),
@@ -173,6 +175,46 @@ class AuthApiClient {
         );
       }
       throw _failure(response);
+    });
+  }
+
+  /// Crea una Checkout Session Stripe e restituisce l'URL di pagamento.
+  Future<String> checkout({
+    required String accessToken,
+    required String plan,
+    String? email,
+  }) async {
+    return _guard(() async {
+      final response = await _client.post(
+        Uri.parse(apiEndpoint('/checkout')),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: jsonEncode({
+          'plan': plan,
+          if (email != null && email.isNotEmpty) 'email': email,
+        }),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return data['checkout_url'] as String;
+      }
+      throw _failure(response);
+    });
+  }
+
+  /// Richiede il reset password (username o email). Sempre 200 lato server.
+  Future<void> requestPasswordReset(String identifier) async {
+    return _guard(() async {
+      final response = await _client.post(
+        Uri.parse(apiEndpoint('/forgot-password')),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'identifier': identifier}),
+      );
+      if (response.statusCode != 200) {
+        throw _failure(response);
+      }
     });
   }
 
