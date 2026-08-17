@@ -262,6 +262,11 @@ class CloudController extends ChangeNotifier {
     if (session == null) return false;
     try {
       await _api.deleteAccount(session.accessToken);
+      // Cancella anche la cache drift locale (mood entries, badge).
+      final user = _authController.currentUser;
+      if (user != null) {
+        await _userRepository.deleteUser(user.id);
+      }
       await logoutCloud();
       return true;
     } on CloudApiFailure catch (e) {

@@ -29,52 +29,74 @@ class WellnessSection extends StatelessWidget {
           padding: EdgeInsets.only(bottom: 16),
           child: SectionHeader(title: 'Wellness'),
         ),
-        _card(
-          context,
-          icon: Icons.auto_awesome_rounded,
-          color: AppColors.accent,
-          title: 'Chat AI',
-          subtitle: 'Parla con il tuo assistente di benessere',
-          onTap: () => _openGated(
-            context,
-            requiresPro: true,
-            page: const ChatAiPage(),
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _featureTile(
+                context,
+                icon: Icons.auto_awesome_rounded,
+                color: AppColors.accent,
+                title: 'Chat AI',
+                subtitle: 'Assistente 24/7',
+                locked: !isPro,
+                onTap: () => _openGated(
+                  context,
+                  requiresPro: true,
+                  page: const ChatAiPage(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _featureTile(
+                context,
+                icon: Icons.assignment_outlined,
+                color: AppColors.success,
+                title: 'Questionari',
+                subtitle: 'PHQ-9 · GAD-7',
+                locked: false,
+                onTap: () => _openQuestionnairePicker(context),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
-        _card(
-          context,
-          icon: Icons.assignment_outlined,
-          color: AppColors.success,
-          title: 'Questionari',
-          subtitle: 'PHQ-9 e GAD-7 — autovalutazione clinica',
-          onTap: () => _openQuestionnairePicker(context),
-        ),
-        const SizedBox(height: 10),
-        _card(
-          context,
-          icon: Icons.psychology_outlined,
-          color: AppColors.gold,
-          title: 'Diario CBT',
-          subtitle: "Ristruttura i pensieri con l'AI",
-          onTap: () => _openGated(
-            context,
-            requiresPro: true,
-            page: const CbtDiaryPage(),
-          ),
-        ),
-        const SizedBox(height: 10),
-        _card(
-          context,
-          icon: Icons.insights_outlined,
-          color: AppColors.textSecondary,
-          title: 'Insight',
-          subtitle: 'I tuoi pattern di umore, analizzati',
-          onTap: () => _openGated(
-            context,
-            requiresPro: true,
-            page: const InsightsPage(),
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _featureTile(
+                context,
+                icon: Icons.psychology_outlined,
+                color: AppColors.gold,
+                title: 'Diario CBT',
+                subtitle: 'Ristruttura i pensieri',
+                locked: !isPro,
+                onTap: () => _openGated(
+                  context,
+                  requiresPro: true,
+                  page: const CbtDiaryPage(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _featureTile(
+                context,
+                icon: Icons.insights_outlined,
+                color: AppColors.textSecondary,
+                title: 'Insight',
+                subtitle: 'Analisi dei pattern',
+                locked: !isPro,
+                onTap: () => _openGated(
+                  context,
+                  requiresPro: true,
+                  page: const InsightsPage(),
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 6),
         if (session == null)
@@ -136,12 +158,13 @@ class WellnessSection extends StatelessWidget {
     );
   }
 
-  Widget _card(
+  Widget _featureTile(
     BuildContext context, {
     required IconData icon,
     required Color color,
     required String title,
     required String subtitle,
+    required bool locked,
     VoidCallback? onTap,
   }) {
     return Material(
@@ -156,45 +179,51 @@ class WellnessSection extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                      ),
+              Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.14),
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(height: 1),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        color: AppColors.textFaint,
-                        fontSize: 11.5,
-                      ),
+                    child: Icon(icon, color: color, size: 19),
+                  ),
+                  const Spacer(),
+                  if (locked)
+                    const Icon(
+                      Icons.lock_outline_rounded,
+                      color: AppColors.textFaint,
+                      size: 16,
+                    )
+                  else
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: color.withValues(alpha: 0.7),
+                      size: 18,
                     ),
-                  ],
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
                 ),
               ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.textFaint,
-                size: 18,
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: AppColors.textFaint,
+                  fontSize: 11.5,
+                ),
               ),
             ],
           ),

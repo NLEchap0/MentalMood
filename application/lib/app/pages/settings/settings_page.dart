@@ -7,6 +7,7 @@ import 'package:application/app/widgets/glass_card.dart';
 import 'package:application/app/widgets/refresh_view.dart';
 import 'package:application/app/widgets/section_header.dart';
 import 'package:application/state/auth_controller.dart';
+import 'package:application/state/cloud_controller.dart';
 import 'package:application/state/mood_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -351,7 +352,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       child: const CloudSection(),
                     ),
                     const SizedBox(height: 40),
-                    const SectionHeader(title: 'Account'),
+                    const SectionHeader(title: 'Danger Zone'),
                     Padding(
                       padding: const EdgeInsets.only(top: 12),
                       child: GlassCard(
@@ -367,7 +368,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 message: 'Log out from your account?',
                                 onConfirm: () async {
                                   final navigator = Navigator.of(context);
-                                  await context.read<AuthController>().logout();
+                                  await context.read<CloudController>().logoutCloud();
                                   navigator.pushReplacementNamed('/login');
                                 },
                               ),
@@ -375,20 +376,21 @@ class _SettingsPageState extends State<SettingsPage> {
                             const Divider(indent: 64),
                             _Tile(
                               title: 'Delete account',
-                              subtitle: 'Erase account and all data',
-                              icon: Icons.person_remove_rounded,
+                              subtitle: 'Erase local data and cloud account',
+                              icon: Icons.delete_forever_rounded,
                               color: AppColors.danger,
                               onTap: () => _confirmAction(
                                 title: 'Delete forever?',
                                 message:
-                                    'This will erase your account and all data. Irreversible.',
+                                    'This will erase the cloud account, all '
+                                    'local data and your subscription. '
+                                    'Irreversible.',
                                 isDestructive: true,
                                 confirmLabel: 'Delete',
                                 onConfirm: () async {
                                   final navigator = Navigator.of(context);
-                                  await context
-                                      .read<AuthController>()
-                                      .deleteAccount();
+                                  final cloud = context.read<CloudController>();
+                                  await cloud.deleteCloudAccount();
                                   navigator.pushReplacementNamed('/login');
                                 },
                               ),

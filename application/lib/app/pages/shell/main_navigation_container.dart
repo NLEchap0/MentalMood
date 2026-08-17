@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:application/app/navigation/app_navigator.dart';
@@ -9,7 +10,10 @@ import 'package:application/app/pages/settings/settings_page.dart';
 import 'package:application/app/theme/app_colors.dart';
 import 'package:application/app/theme/animations.dart';
 import 'package:application/app/widgets/app_button.dart';
+import 'package:application/services/auth_api_client.dart';
+import 'package:application/services/sync_service.dart';
 import 'package:application/state/auth_controller.dart';
+import 'package:application/state/cloud_controller.dart';
 import 'package:application/state/mood_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -24,6 +28,7 @@ class MainNavigationContainer extends StatefulWidget {
 
 class _MainNavigationContainerState extends State<MainNavigationContainer> {
   int _selectedIndex = 0;
+  Timer? _syncTimer;
 
   static const List<Widget> _pages = [
     HomePage(),
@@ -42,6 +47,34 @@ class _MainNavigationContainerState extends State<MainNavigationContainer> {
         context.read<MoodController>().fetchMoodHistory(user.id);
       }
     });
+    // Sync automatico periodico (ogni 5 min) quando c'è una sessione cloud
+    // e la DEK è disponibile. Silenzioso: non notifica l'utente.
+    _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) => _autoSync());
+  }
+
+  @override
+  void dispose() {
+    _syncTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _autoSync() async {
+    final cloud = context.read<CloudController>();
+    final session = cloud.session;
+    final dek = await cloud.cloudDek();
+    if (session == null || dek == null) return;
+    final auth = context.read<AuthController>();
+    final user = auth.currentUser;
+    if (user == null) return;
+    await context.read<SyncService>().sync(
+      userId: user.id,
+      credentials: SyncCredentials(
+        accessToken: session.accessToken,
+        syncKey: session.syncKey,
+        dek: dek,
+      ),
+      baseUrl: apiBaseUrl().replaceAll(RegExp(r'/+$'), ''),
+    );
   }
 
   @override

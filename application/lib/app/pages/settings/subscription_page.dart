@@ -24,6 +24,8 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   @override
   void initState() {
     super.initState();
+    // Default: Pro selezionato (il piano raccomandato).
+    _selectedPlan = 'pro';
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await context.read<CloudController>().refreshSubscription();
       if (mounted) setState(() {});
@@ -57,6 +59,27 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                 : 'Piano attuale: ${_planLabel(currentPlan)}'
                     '${info.status == 'trialing' ? ' (prova gratuita)' : ''}',
             style: const TextStyle(color: AppColors.textFaint, fontSize: 13),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColors.accent.withValues(alpha: 0.25),
+              ),
+            ),
+            child: const Text(
+              'Con Pro il tuo diario prende vita: l\'AI capisce i tuoi '
+              'pattern e ti guida ogni giorno con consigli concreti. '
+              'È il piano scelto dalla maggior parte degli utenti.',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12.5,
+                height: 1.4,
+              ),
+            ),
           ),
           const SizedBox(height: 20),
           if (_error != null)
@@ -103,6 +126,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             title: 'Pro',
             price: '€9,99',
             period: 'al mese',
+            badge: 'Più scelto',
             features: const [
               'Tutto di Standard',
               'Chat AI illimitata',
@@ -116,15 +140,27 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           ),
           const SizedBox(height: 24),
           AppButton(
-            label: _selectedPlan == null
-                ? (currentPlan == 'free'
-                    ? 'Seleziona un piano'
-                    : 'Il tuo piano è attivo')
-                : 'Paga con Stripe · $_selectedPlan',
-            onPressed:
-                (_selectedPlan == null || _processing || session == null)
-                    ? null
-                    : () => _checkout(session),
+            label: session == null
+                ? 'Collega il tuo account per continuare'
+                : (currentPlan != 'free' && _selectedPlan == currentPlan
+                    ? 'Il tuo piano è già attivo'
+                    : 'Paga con Stripe · $_selectedPlan'),
+            onPressed: _processing
+                ? null
+                : () {
+                    if (session == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Collega il tuo account cloud dalla pagina Profilo '
+                            'prima di acquistare un piano.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                    _checkout(session);
+                  },
             isLoading: _processing,
           ),
           const SizedBox(height: 12),
@@ -154,8 +190,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     required List<String> features,
     required bool isCurrent,
     bool isSelected = false,
+    String? badge,
     VoidCallback? onSelect,
   }) {
+    final highlighted = isSelected || badge != null;
     final borderColor = isCurrent
         ? AppColors.success
         : isSelected
@@ -172,7 +210,16 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           decoration: BoxDecoration(
             color: AppColors.surface.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: borderColor, width: isCurrent ? 1.6 : 1),
+            border: Border.all(color: borderColor, width: highlighted ? 1.8 : 1),
+            boxShadow: highlighted
+                ? [
+                    BoxShadow(
+                      color: AppColors.accent.withValues(alpha: 0.12),
+                      blurRadius: 18,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,6 +235,26 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                     ),
                   ),
                   const Spacer(),
+                  if (badge != null)
+                    Container(
+                      margin: const EdgeInsets.only(right: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        badge,
+                        style: const TextStyle(
+                          color: AppColors.accent,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
                   if (isCurrent)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -291,14 +358,57 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       await Future<void>.delayed(const Duration(seconds: 2));
       await cloud.refreshSubscription();
       await auth.refreshProfile();
+      // Se ora è Pro, invita al consenso AI.
+      final plan = cloud.subscription?.plan ?? cloud.session?.plan;
+      if (plan == 'pro' && !cloud.consentEnabled && mounted) {
+        final wantConsent = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Attiva le funzioni AI?'),
+            content: const Text(
+              'Vuoi permettere all\'AI di analizzare i tuoi dati di umore '
+              'per offrirti insight e consigli personalizzati?\n\n'
+              'Puoi revocare il consenso in qualsiasi momento dalle '
+              'impostazioni.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Non ora'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Attiva'),
+              ),
+            ],
+          ),
+        );
+        if (wantConsent == true) {
+          await cloud.setAiConsent(true);
+        }
+      }
     } on CloudApiFailure catch (e) {
       setState(() {
         _error = switch (e.code) {
           'plan_invalid' => 'Piano non valido.',
-          'network_error' => 'Server non raggiungibile.',
+          'network_error' => 'Server non raggiungibile. Controlla la connessione.',
           _ => 'Errore: ${e.code}',
         };
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_error!)),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Si è verificato un errore inatteso. Riprova.';
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_error!)),
+        );
+      }
     } finally {
       if (mounted) setState(() => _processing = false);
     }

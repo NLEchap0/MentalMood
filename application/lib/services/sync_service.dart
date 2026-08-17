@@ -6,6 +6,7 @@ import 'package:application/data/sync/sync_models.dart';
 import 'package:application/domain/models.dart';
 import 'package:application/domain/services/crypto_service.dart';
 import 'package:application/domain/services/encrypted_payload.dart';
+import 'package:application/services/questionnaire_service.dart';
 import 'package:application/services/sync_http_client.dart';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/foundation.dart';
@@ -87,6 +88,32 @@ class SyncService extends ChangeNotifier {
           entity: 'emotion',
           payload: payload,
           updatedAt: entry.createdAt,
+          deleted: false,
+        ));
+      }
+
+      // Sincronizza anche i questionari PHQ-9/GAD-7 (entity questionnaire),
+      // criptati come le mood entries.
+      final questionnaires = await QuestionnaireService().history(userId);
+      for (final q in questionnaires) {
+        if (q.completedAt.isBefore(since)) continue;
+        final qPayload = base64Encode(
+          (await _crypto.encryptString(
+            jsonEncode({
+              'type': q.type,
+              'totalScore': q.totalScore,
+              'severity': q.severity,
+              'completedAt': q.completedAt.toUtc().toIso8601String(),
+            }),
+            credentials.dek,
+          ))
+              .toBytes(),
+        );
+        records.add(SyncRecord(
+          recordKey: 'questionnaire:${q.type}:${q.completedAt.millisecondsSinceEpoch}',
+          entity: 'questionnaire',
+          payload: qPayload,
+          updatedAt: q.completedAt,
           deleted: false,
         ));
       }

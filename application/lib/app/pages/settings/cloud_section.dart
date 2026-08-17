@@ -86,9 +86,9 @@ class _CloudSectionState extends State<CloudSection> {
 
     return [
       _Row(
-        title: 'Cloud connected',
+        title: 'Account',
         subtitle: '@${session.username} · ${session.plan} plan',
-        icon: Icons.cloud_done_outlined,
+        icon: Icons.person_outline_rounded,
         color: AppColors.success,
         onTap: () => _showAccountSheet(context, cloud),
       ),
@@ -112,33 +112,35 @@ class _CloudSectionState extends State<CloudSection> {
           }
         },
       ),
-      const Divider(indent: 64),
-      SwitchListTile(
-        value: cloud.consentEnabled,
-        onChanged: cloud.isLoading ? null : (v) => cloud.setAiConsent(v),
-        title: const Text(
-          'AI consent',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
-            fontSize: 14,
+      if (sub != null && sub.plan == 'pro') ...[
+        const Divider(indent: 64),
+        SwitchListTile(
+          value: cloud.consentEnabled,
+          onChanged: cloud.isLoading ? null : (v) => cloud.setAiConsent(v),
+          title: const Text(
+            'AI consent',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+            ),
+          ),
+          subtitle: const Text(
+            'Allow the AI to analyse your data for insights',
+            style: TextStyle(color: AppColors.textFaint, fontSize: 11.5),
+          ),
+          secondary: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.accent.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.smart_toy_outlined,
+                color: AppColors.accent, size: 19),
           ),
         ),
-        subtitle: const Text(
-          'Allow the AI to analyse your data for insights',
-          style: TextStyle(color: AppColors.textFaint, fontSize: 11.5),
-        ),
-        secondary: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColors.accent.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.smart_toy_outlined,
-              color: AppColors.accent, size: 19),
-        ),
-      ),
+      ],
       const Divider(indent: 64),
       _Row(
         title: 'Sync now',
@@ -154,14 +156,6 @@ class _CloudSectionState extends State<CloudSection> {
         icon: Icons.download_rounded,
         color: AppColors.textSecondary,
         onTap: () => _export(context, cloud),
-      ),
-      const Divider(indent: 64),
-      _Row(
-        title: 'Delete cloud account',
-        subtitle: 'Erase the account and all cloud data',
-        icon: Icons.person_remove_rounded,
-        color: AppColors.danger,
-        onTap: () => _confirmDeleteCloud(context, cloud),
       ),
       if (cloud.errorCode != null)
         Padding(
@@ -232,40 +226,6 @@ class _CloudSectionState extends State<CloudSection> {
         ],
       ),
     );
-  }
-
-  Future<void> _confirmDeleteCloud(
-    BuildContext context,
-    CloudController cloud,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete cloud account?'),
-        content: const Text(
-            'This erases the account and all cloud data. Irreversible.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      final ok = await cloud.deleteCloudAccount();
-      if (mounted) {
-        _snack(this.context, ok ? 'Cloud account deleted.' : 'Delete failed.');
-      }
-    }
   }
 
   Future<void> _showAccountSheet(

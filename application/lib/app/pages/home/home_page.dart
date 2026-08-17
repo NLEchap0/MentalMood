@@ -3,7 +3,6 @@ import 'package:application/app/navigation/app_navigator.dart';
 import 'package:application/app/pages/growth/achievements_page.dart';
 import 'package:application/app/pages/growth/streak_stats_page.dart';
 import 'package:application/app/pages/journal/add_mood_page.dart';
-import 'package:application/app/pages/journal/mood_detail_page.dart';
 import 'package:application/app/theme/app_colors.dart';
 import 'package:application/app/theme/app_icons.dart';
 import 'package:application/app/theme/app_theme.dart';
@@ -18,7 +17,6 @@ import 'package:application/app/widgets/range_selector.dart';
 import 'package:application/app/widgets/refresh_view.dart';
 import 'package:application/app/widgets/section_header.dart';
 import 'package:application/domain/models.dart';
-import 'package:application/domain/mood_labels.dart';
 import 'package:application/state/auth_controller.dart';
 import 'package:application/state/mood_controller.dart';
 import 'package:flutter/material.dart';
@@ -68,11 +66,6 @@ class HomePage extends StatelessWidget {
                         child: SectionHeader(title: 'Weekly Stats'),
                       ),
                       _buildMetrics(context, moodController),
-                      const Padding(
-                        padding: EdgeInsets.only(bottom: 16),
-                        child: SectionHeader(title: 'Recent Activity'),
-                      ),
-                      _buildRecentActivity(context, moodController),
                       const Padding(
                         padding: EdgeInsets.only(top: 8),
                         child: WellnessSection(),
@@ -312,30 +305,6 @@ class HomePage extends StatelessWidget {
     final rounded = change.round();
     return rounded > 0 ? '+$rounded%' : '$rounded%';
   }
-
-  Widget _buildRecentActivity(BuildContext context, MoodController controller) {
-    final recent = controller.moodHistory.take(5).toList();
-    if (recent.isEmpty) {
-      return const GlassCard(
-        size: GlassCardSize.sm,
-        padding: EdgeInsets.all(20),
-        child: Text(
-          'No activity recorded yet. Your check-ins will appear here.',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 13, color: AppColors.textFaint),
-        ),
-      );
-    }
-    return Column(
-      children: [
-        for (var i = 0; i < recent.length; i++)
-          Padding(
-            padding: EdgeInsets.only(bottom: i == recent.length - 1 ? 0 : 12),
-            child: _RecentEntryTile(entry: recent[i]),
-          ),
-      ],
-    );
-  }
 }
 
 class _HeaderIcon extends StatelessWidget {
@@ -388,90 +357,6 @@ class _StreakChip extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _RecentEntryTile extends StatelessWidget {
-  final MoodEntry entry;
-  const _RecentEntryTile({required this.entry});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = AppTheme.getSmoothColor(entry.value.toDouble());
-    return HoverEffect(
-      onTap: () => AppNavigator.push(context, MoodDetailPage(entry: entry)),
-      child: GlassCard(
-        size: GlassCardSize.sm,
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                AppIcons.getMoodIcon(entry.value),
-                size: 20,
-                color: color,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        moodLabelFor(entry.value).toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        DateFormat.Hm().format(entry.createdAt),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textFaint,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    entry.hasNote
-                        ? entry.note!
-                        : 'Recorded a level ${entry.value} state.',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      color: entry.hasNote
-                          ? AppColors.textSecondary
-                          : AppColors.textFaint,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.textFaint,
-              size: 18,
-            ),
-          ],
-        ),
       ),
     );
   }
