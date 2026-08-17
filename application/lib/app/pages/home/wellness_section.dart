@@ -10,8 +10,8 @@ import 'package:application/state/cloud_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-/// Sezione "Benessere" integrata nella Home: chat AI, questionari,
-/// diario CBT e insight — con gating per piano (free → pagina piani).
+/// "Wellness" section integrated in Home: AI chat, questionnaires,
+/// CBT diary and insights — with plan gating (free → subscription page).
 class WellnessSection extends StatelessWidget {
   const WellnessSection({super.key});
 
@@ -37,8 +37,8 @@ class WellnessSection extends StatelessWidget {
                 context,
                 icon: Icons.auto_awesome_rounded,
                 color: AppColors.accent,
-                title: 'Chat AI',
-                subtitle: 'Assistente 24/7',
+                title: 'AI Chat',
+                subtitle: '24/7 Assistant',
                 locked: !isPro,
                 onTap: () => _openGated(
                   context,
@@ -53,7 +53,7 @@ class WellnessSection extends StatelessWidget {
                 context,
                 icon: Icons.assignment_outlined,
                 color: AppColors.success,
-                title: 'Questionari',
+                title: 'Questionnaires',
                 subtitle: 'PHQ-9 · GAD-7',
                 locked: false,
                 onTap: () => _openQuestionnairePicker(context),
@@ -70,8 +70,8 @@ class WellnessSection extends StatelessWidget {
                 context,
                 icon: Icons.psychology_outlined,
                 color: AppColors.gold,
-                title: 'Diario CBT',
-                subtitle: 'Ristruttura i pensieri',
+                title: 'CBT Diary',
+                subtitle: 'Restructure thoughts',
                 locked: !isPro,
                 onTap: () => _openGated(
                   context,
@@ -86,8 +86,8 @@ class WellnessSection extends StatelessWidget {
                 context,
                 icon: Icons.insights_outlined,
                 color: AppColors.textSecondary,
-                title: 'Insight',
-                subtitle: 'Analisi dei pattern',
+                title: 'Insights',
+                subtitle: 'Pattern analysis',
                 locked: !isPro,
                 onTap: () => _openGated(
                   context,
@@ -103,7 +103,7 @@ class WellnessSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              'Collega il tuo account cloud per usare le funzioni AI.',
+              'Connect your cloud account to use AI features.',
               style: TextStyle(
                 color: AppColors.textFaint.withValues(alpha: 0.9),
                 fontSize: 12,
@@ -116,7 +116,7 @@ class WellnessSection extends StatelessWidget {
             child: TextButton(
               onPressed: () => openSubscriptionPage(context),
               child: const Text(
-                'Passa a Pro per sbloccare Chat AI, CBT e Insight →',
+                'Upgrade to Pro to unlock AI Chat, CBT, and Insights →',
                 style: TextStyle(color: AppColors.accent, fontSize: 12.5),
               ),
             ),
@@ -136,7 +136,7 @@ class WellnessSection extends StatelessWidget {
     if (cloud.session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Collega il tuo account cloud dalla pagina Profilo.'),
+          content: Text('Connect your cloud account from the Profile page.'),
         ),
       );
       return;
@@ -233,7 +233,7 @@ class WellnessSection extends StatelessWidget {
   }
 }
 
-/// Pagina questionari PHQ-9 / GAD-7 (schermata dedicata).
+/// Questionnaire page PHQ-9 / GAD-7 (dedicated screen).
 class QuestionnairesPage extends StatefulWidget {
   const QuestionnairesPage({super.key});
 
@@ -243,39 +243,39 @@ class QuestionnairesPage extends StatefulWidget {
 
 class _QuestionnairesPageState extends State<QuestionnairesPage> {
   static const _phq9 = [
-    'Poco interesse o piacere nel fare le cose',
-    'Sentirsi giù, depresso o senza speranza',
-    'Difficoltà ad addormentarsi o dormire troppo',
-    'Sentirsi stanco o con poca energia',
-    'Scarso appetito o mangiare troppo',
-    'Sentirsi male con sé stesso o sentirsi un fallimento',
-    'Difficoltà a concentrarsi',
-    'Muoversi o parlare più lentamente del solito',
-    'Pensieri di farsi del male',
+    'Little interest or pleasure in doing things',
+    'Feeling down, depressed, or hopeless',
+    'Trouble falling or staying asleep, or sleeping too much',
+    'Feeling tired or having little energy',
+    'Poor appetite or overeating',
+    'Feeling bad about yourself or that you are a failure',
+    'Trouble concentrating',
+    'Moving or speaking so slowly that other people could have noticed',
+    'Thoughts that you would be better off dead or of hurting yourself',
   ];
 
   static const _gad7 = [
-    'Sentirsi nervoso, ansioso o con i nervi a fior di pelle',
-    'Non riuscire a smettere di preoccuparsi',
-    'Preoccuparsi troppo per cose diverse',
-    'Difficoltà a rilassarsi',
-    'Essere così irrequieto da non riuscire a stare fermo',
-    'Infastidirsi o irritarsi facilmente',
-    'Avere paura che stia per succedere qualcosa di terribile',
+    'Feeling nervous, anxious or on edge',
+    'Not being able to stop or control worrying',
+    'Worrying too much about different things',
+    'Trouble relaxing',
+    'Being so restless that it is hard to sit still',
+    'Becoming easily annoyed or irritable',
+    'Feeling afraid as if something awful might happen',
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Questionari')),
+      appBar: AppBar(title: const Text('Questionnaires')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           _questionnaireCard(
             context,
             icon: Icons.healing_outlined,
-            title: 'PHQ-9 — Depressione',
-            subtitle: '9 domande sulla scorsa settimana',
+            title: 'PHQ-9 — Depression',
+            subtitle: '9 questions about the past week',
             questions: _phq9,
             type: 'phq9',
           ),
@@ -283,15 +283,15 @@ class _QuestionnairesPageState extends State<QuestionnairesPage> {
           _questionnaireCard(
             context,
             icon: Icons.psychology_outlined,
-            title: 'GAD-7 — Ansia',
-            subtitle: '7 domande sulla scorsa settimana',
+            title: 'GAD-7 — Anxiety',
+            subtitle: '7 questions about the past week',
             questions: _gad7,
             type: 'gad7',
           ),
           const SizedBox(height: 20),
           const Text(
-            'Questi test sono strumenti informativi e non sostituiscono '
-            'un professionista sanitario.',
+            'These tests are informational tools and do not replace '
+            'a healthcare professional.',
             style: TextStyle(color: AppColors.textFaint, fontSize: 12),
           ),
         ],
@@ -365,7 +365,7 @@ class _QuestionnairesPageState extends State<QuestionnairesPage> {
       final answer = await showDialog<int>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: Text('Domanda ${i + 1}/${questions.length}'),
+          title: Text('Question ${i + 1}/${questions.length}'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -376,10 +376,10 @@ class _QuestionnairesPageState extends State<QuestionnairesPage> {
                 ListTile(
                   title: Text(
                     switch (v) {
-                      0 => 'Per niente',
-                      1 => 'Diversi giorni',
-                      2 => 'Più della metà dei giorni',
-                      _ => 'Quasi ogni giorno',
+                      0 => 'Not at all',
+                      1 => 'Several days',
+                      2 => 'More than half the days',
+                      _ => 'Nearly every day',
                     },
                   ),
                   leading: Icon(
@@ -409,12 +409,12 @@ class _QuestionnairesPageState extends State<QuestionnairesPage> {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Risultato'),
+        title: const Text('Result'),
         content: Text(
-          'Punteggio: ${result.totalScore}\n'
-          'Livello: ${result.severity}\n\n'
-          'Questo strumento è informativo e non sostituisce un '
-          'professionista sanitario.',
+          'Score: ${result.totalScore}\n'
+          'Severity: ${result.severity}\n\n'
+          'This tool is informative and does not replace a '
+          'healthcare professional.',
         ),
         actions: [
           TextButton(

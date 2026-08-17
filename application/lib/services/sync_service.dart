@@ -92,8 +92,8 @@ class SyncService extends ChangeNotifier {
         ));
       }
 
-      // Sincronizza anche i questionari PHQ-9/GAD-7 (entity questionnaire),
-      // criptati come le mood entries.
+      // Also synchronize PHQ-9/GAD-7 questionnaires (entity questionnaire),
+      // encrypted like the mood entries.
       final questionnaires = await QuestionnaireService().history(userId);
       for (final q in questionnaires) {
         if (q.completedAt.isBefore(since)) continue;
@@ -168,8 +168,8 @@ class SyncService extends ChangeNotifier {
       try {
         await _applyPull(record, userId, dek, local);
       } catch (e) {
-        // Un record corrotto (payload non decriptabile, JSON invalido) non
-        // deve bloccare l'intero sync: si salta e si continua con gli altri.
+        // A corrupted record (payload not decryptable, invalid JSON)
+        // must not block the entire sync: skip it and continue.
         debugPrint('Sync: skipped record ${record.recordKey}: $e');
       }
     }

@@ -31,7 +31,7 @@ class HttpSyncClient implements SyncHttpClient {
     if (normalized.endsWith('/')) {
       normalized = normalized.substring(0, normalized.length - 1);
     }
-    // Su produzione IONOS senza mod_rewrite il sync passa da /index.php/sync.
+    // On IONOS production without mod_rewrite, sync goes through /index.php/sync.
     final uri = Uri.parse(
       normalized.contains('webdevinnovations.ch')
           ? '$normalized/index.php/sync'

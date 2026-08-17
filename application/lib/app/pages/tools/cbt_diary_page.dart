@@ -6,7 +6,7 @@ import 'package:application/state/cloud_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-/// Diario CBT a schermo intero: situazione + pensiero, l'AI ristruttura.
+/// Full-screen CBT diary: situation + thought, AI restructures it.
 class CbtDiaryPage extends StatefulWidget {
   const CbtDiaryPage({super.key});
 
@@ -49,37 +49,37 @@ class _CbtDiaryPageState extends State<CbtDiaryPage> {
     final controller = context.watch<AiController>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Diario CBT')),
+      appBar: AppBar(title: const Text('CBT Diary')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              "Descrivi il pensiero negativo e la situazione: l'AI ti aiuta "
-              'a identificare le distorsioni e a ristrutturarlo.',
+              "Describe the negative thought and the situation: AI helps you "
+              'identify distortions and restructure it.',
               style: TextStyle(color: AppColors.textFaint, fontSize: 13),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _situationController,
-              decoration: const InputDecoration(labelText: 'Situazione'),
+              decoration: const InputDecoration(labelText: 'Situation'),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _thoughtController,
-              decoration: const InputDecoration(labelText: 'Pensiero'),
+              decoration: const InputDecoration(labelText: 'Thought'),
             ),
             const SizedBox(height: 20),
             AppButton(
-              label: 'Ristruttura',
+              label: 'Restructure',
               isLoading: controller.state == AiState.loading,
               onPressed: _submit,
             ),
             if (controller.lastReply != null) ...[
               const SizedBox(height: 24),
               const Text(
-                'Ristrutturazione',
+                'Restructuring',
                 style: TextStyle(
                   color: AppColors.accent,
                   fontWeight: FontWeight.w700,

@@ -16,13 +16,13 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+  final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -31,7 +31,7 @@ class _LoginPageState extends State<LoginPage> {
     if (!_formKey.currentState!.validate()) return;
     final controller = context.read<CloudController>();
     final success = await controller.loginCloud(
-      username: _usernameController.text,
+      identifier: _identifierController.text.trim(),
       password: _passwordController.text,
     );
     if (success && mounted) {
@@ -54,7 +54,7 @@ class _LoginPageState extends State<LoginPage> {
         ? null
         : controller.errorCode == 'network_error'
             ? 'Server unreachable. Check your connection.'
-            : 'Invalid username or password.';
+            : 'Invalid username or password (${controller.errorCode}).';
 
     return Scaffold(
       body: AppBackground(
@@ -125,11 +125,11 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(height: 8),
                         TextFormField(
-                          controller: _usernameController,
+                          controller: _identifierController,
                           textInputAction: TextInputAction.next,
                           style: const TextStyle(color: AppColors.textPrimary),
                           decoration: const InputDecoration(
-                            labelText: 'Username',
+                            labelText: 'Username or Email',
                             prefixIcon: Icon(
                               Icons.person_outline_rounded,
                               color: AppColors.textSecondary,
@@ -222,20 +222,20 @@ class _LoginPageState extends State<LoginPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'Inserisci il tuo username o la tua email: ti invieremo '
-              'un link per reimpostare la password.',
+              'Enter your username or email: we will send you '
+              'a link to reset your password.',
             ),
             const SizedBox(height: 12),
             TextField(
               controller: identifier,
-              decoration: const InputDecoration(labelText: 'Username o email'),
+              decoration: const InputDecoration(labelText: 'Username or email'),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Annulla'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -243,7 +243,7 @@ class _LoginPageState extends State<LoginPage> {
               await cloud.requestPasswordReset(identifier.text.trim());
               if (ctx.mounted) Navigator.pop(ctx, true);
             },
-            child: const Text('Invia'),
+            child: const Text('Send'),
           ),
         ],
       ),
@@ -252,8 +252,8 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Se l\'account esiste, riceverai un\'email con il link '
-            'per resettare la password.',
+            'If the account exists, you will receive an email with the link '
+            'to reset your password.',
           ),
         ),
       );

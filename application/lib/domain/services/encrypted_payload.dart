@@ -1,5 +1,5 @@
-/// Version byte per il formato di serializzazione.
-/// 0x01 = AES-256-GCM, nonce 12 byte, mac 16 byte.
+/// Version byte for the serialization format.
+/// 0x01 = AES-256-GCM, nonce 12 bytes, mac 16 bytes.
 const int payloadVersion = 0x01;
 const int nonceLength = 12;
 const int macLength = 16;
@@ -26,10 +26,10 @@ class EncryptedPayload {
 
   static EncryptedPayload fromBytes(List<int> bytes) {
     if (bytes.length < 1 + nonceLength + macLength) {
-      throw const FormatException('Payload troppo corto');
+      throw const FormatException('Payload too short');
     }
     if (bytes.first != payloadVersion) {
-      throw FormatException('Version byte sconosciuto: ${bytes.first}');
+      throw FormatException('Unknown version byte: ${bytes.first}');
     }
     final cipherLength = bytes.length - 1 - nonceLength - macLength;
     return EncryptedPayload(

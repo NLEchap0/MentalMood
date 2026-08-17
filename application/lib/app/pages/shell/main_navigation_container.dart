@@ -47,8 +47,8 @@ class _MainNavigationContainerState extends State<MainNavigationContainer> {
         context.read<MoodController>().fetchMoodHistory(user.id);
       }
     });
-    // Sync automatico periodico (ogni 5 min) quando c'è una sessione cloud
-    // e la DEK è disponibile. Silenzioso: non notifica l'utente.
+    // Periodic automatic sync (every 5 min) when there is a cloud session
+    // and the DEK is available. Silent: does not notify the user.
     _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) => _autoSync());
   }
 

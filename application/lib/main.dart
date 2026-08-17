@@ -110,8 +110,8 @@ void main() async {
   );
 }
 
-/// Placeholder finché l'implementazione nativa delle notifiche non è
-/// disponibile (richiede la config nativa Android/iOS, documentata al deploy).
+/// Placeholder until native notification implementation is
+/// available (requires native Android/iOS config, documented at deployment).
 class _UnimplementedNotificationService implements NotificationService {
   @override
   Future<bool> requestPermission() async => false;

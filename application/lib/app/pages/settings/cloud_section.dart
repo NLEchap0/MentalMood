@@ -11,8 +11,8 @@ import 'package:application/state/cloud_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-/// Sezione "Cloud & AI": login/register verso l'API, stato piano,
-/// consenso AI, sincronizzazione ed export dei dati.
+/// "Cloud & AI" section: login/register with the API, plan state,
+/// AI consent, data synchronization, and export.
 class CloudSection extends StatefulWidget {
   const CloudSection({super.key});
 
@@ -43,7 +43,7 @@ class _CloudSectionState extends State<CloudSection> {
     return [
       _Row(
         title: 'Cloud & AI',
-        subtitle: 'Backup criptato, sync e funzioni AI',
+        subtitle: 'Encrypted backup, sync and AI features',
         icon: Icons.cloud_outlined,
         color: AppColors.accent,
         onTap: () => _showAccountSheet(context, cloud),
@@ -187,8 +187,8 @@ class _CloudSectionState extends State<CloudSection> {
         syncKey: session.syncKey,
         dek: dek,
       ),
-      // Il sync concatena /sync: passiamo l'URL base senza index.php
-      // e il client lo gestisce (HttpSyncClient usa apiEndpoint).
+      // Sync concatenates /sync: we pass the base URL without index.php
+      // and the client handles it (HttpSyncClient uses apiEndpoint).
       baseUrl: apiBaseUrl().replaceAll(RegExp(r'/+$'), ''),
     );
     cloud.setSyncResult(ok
@@ -234,96 +234,199 @@ class _CloudSectionState extends State<CloudSection> {
   ) async {
     final username = TextEditingController();
     final email = TextEditingController();
+    final name = TextEditingController();
+    final surname = TextEditingController();
     final password = TextEditingController();
+    DateTime? birthDate;
+    String? birthDateError;
     var mode = 'login'; // 'login' | 'register'
+
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                mode == 'login' ? 'Connect to cloud' : 'Create cloud account',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (stfCtx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 24,
+                bottom: MediaQuery.of(stfCtx).viewInsets.bottom + 32,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      mode == 'login'
+                          ? 'Connect to cloud'
+                          : 'Create cloud account',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: username,
+                      decoration: InputDecoration(
+                        labelText: mode == 'login'
+                            ? 'Username or Email'
+                            : 'Username',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (mode == 'register') ...[
+                      TextField(
+                        controller: email,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(labelText: 'Email'),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: name,
+                              decoration:
+                                  const InputDecoration(labelText: 'Name'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: surname,
+                              decoration:
+                                  const InputDecoration(labelText: 'Surname'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: stfCtx,
+                            initialDate: birthDate ?? DateTime(2000),
+                            firstDate: DateTime(1900),
+                            lastDate: DateTime.now(),
+                          );
+                          if (picked != null) {
+                            setSheetState(() {
+                              birthDate = picked;
+                              birthDateError = null;
+                            });
+                          }
+                        },
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: 'Birth Date',
+                            errorText: birthDateError == null
+                                ? null
+                                : 'Required',
+                          ),
+                          child: Text(
+                            birthDate == null
+                                ? 'Select your birth date'
+                                : "${birthDate!.day}/${birthDate!.month}/${birthDate!.year}",
+                            style: TextStyle(
+                              color: birthDate == null
+                                  ? AppColors.textSecondary
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    TextField(
+                      controller: password,
+                      obscureText: true,
+                      decoration: const InputDecoration(labelText: 'Password'),
+                    ),
+                    if (cloud.errorCode != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        switch (cloud.errorCode) {
+                          'network_error' =>
+                            'Server unreachable. Check your connection.',
+                          'conflict' ||
+                          'username_taken' =>
+                            'Username or email already taken.',
+                          'auth_error' ||
+                          'invalid_credentials' =>
+                            'Invalid username or password.',
+                          _ => 'Error: ${cloud.errorCode}',
+                        },
+                        style: const TextStyle(
+                            color: AppColors.danger, fontSize: 12),
+                      ),
+                    ],
+                    const SizedBox(height: 20),
+                    AppButton(
+                      label: mode == 'login' ? 'Login' : 'Register',
+                      isLoading: cloud.isLoading,
+                      onPressed: () async {
+                        if (mode == 'register') {
+                          if (name.text.trim().isEmpty ||
+                              surname.text.trim().isEmpty ||
+                              email.text.trim().isEmpty ||
+                              username.text.trim().isEmpty ||
+                              password.text.isEmpty) {
+                            setSheetState(() => birthDateError = 'fill');
+                            return;
+                          }
+                          if (birthDate == null) {
+                            setSheetState(() => birthDateError = 'date');
+                            return;
+                          }
+                        }
+                        bool ok;
+                        if (mode == 'login') {
+                          ok = await cloud.loginCloud(
+                            identifier: username.text.trim(),
+                            password: password.text,
+                          );
+                        } else {
+                          ok = await cloud.registerCloud(
+                            username: username.text.trim(),
+                            email: email.text.trim(),
+                            password: password.text,
+                            name: name.text.trim(),
+                            surname: surname.text.trim(),
+                            birthDate: birthDate!,
+                          );
+                        }
+                        if (ok && stfCtx.mounted) {
+                          Navigator.pop(stfCtx);
+                        } else {
+                          setSheetState(() {});
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () => setSheetState(() {
+                        mode = mode == 'login' ? 'register' : 'login';
+                      }),
+                      child: Text(
+                        mode == 'login'
+                            ? 'No account? Register here'
+                            : 'Already have an account? Login',
+                        style: const TextStyle(color: AppColors.accent),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: username,
-                decoration: const InputDecoration(labelText: 'Username'),
-              ),
-              const SizedBox(height: 12),
-              if (mode == 'register') ...[
-                TextField(
-                  controller: email,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                ),
-                const SizedBox(height: 12),
-              ],
-              TextField(
-                controller: password,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Password'),
-              ),
-              if (cloud.errorCode != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Error: ${cloud.errorCode}',
-                  style: const TextStyle(color: AppColors.danger, fontSize: 12),
-                ),
-              ],
-              const SizedBox(height: 20),
-              AppButton(
-                label: mode == 'login' ? 'Login' : 'Register',
-                isLoading: cloud.isLoading,
-                onPressed: () async {
-                  final ok = mode == 'login'
-                      ? await cloud.loginCloud(
-                          username: username.text.trim(),
-                          password: password.text,
-                        )
-                      : await cloud.registerCloud(
-                          username: username.text.trim(),
-                          email: email.text.trim(),
-                          password: password.text,
-                        );
-                  if (ok && ctx.mounted) {
-                    Navigator.pop(ctx);
-                  } else {
-                    setSheetState(() {});
-                  }
-                },
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => setSheetState(
-                  () => mode = mode == 'login' ? 'register' : 'login',
-                ),
-                child: Text(
-                  mode == 'login'
-                      ? 'No account? Register here'
-                      : 'Already have an account? Login',
-                  style: const TextStyle(color: AppColors.accent),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 

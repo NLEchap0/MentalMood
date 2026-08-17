@@ -48,8 +48,8 @@ void main() {
       userRepository: userRepo,
       authController: auth,
     );
-    // La cache drift locale è un dettaglio interno: di default l'utente
-    // esiste già, così _syncLocalUser non crea duplicati nei test.
+    // The local drift cache is an internal detail: by default the user
+    // already exists, so _syncLocalUser does not create duplicates in tests.
     when(() => userRepo.getUserByUsername(any())).thenAnswer((_) async =>
         AppUser(
           id: 1,
@@ -59,9 +59,8 @@ void main() {
           birthDate: DateTime(2000),
           passwordHash: 'cloud-only',
         ));
-    // Default: il refresh conserva la sessione (i test specifici lo
-    // sovrascrivono). Evita che restoreSession faccia logout nei test
-    // che non riguardano il refresh.
+    // Default: refresh preserves the session (specific tests overwrite it).
+    // Prevents restoreSession from logging out in tests not related to refresh.
     when(() => api.refresh(any())).thenAnswer((_) async => _session());
   });
 
@@ -74,6 +73,9 @@ void main() {
             email: any(named: 'email'),
             kekSalt: any(named: 'kekSalt'),
             wrappedDek: any(named: 'wrappedDek'),
+            nameCipher: any(named: 'nameCipher'),
+            surnameCipher: any(named: 'surnameCipher'),
+            birthDateCipher: any(named: 'birthDateCipher'),
           )).thenAnswer((inv) async {
         final kekSalt = inv.namedArguments[#kekSalt] as String;
         expect(kekSalt.length, 32); // hex 16 byte
@@ -82,7 +84,7 @@ void main() {
         return {'id': 1, 'username': 'mario'};
       });
       when(() => api.login(
-            username: any(named: 'username'),
+            identifier: any(named: 'identifier'),
             password: any(named: 'password'),
           )).thenAnswer((_) async => _session());
 
@@ -90,6 +92,9 @@ void main() {
         username: 'mario',
         email: 'mario@example.com',
         password: 'password123',
+        name: 'Mario',
+        surname: 'Rossi',
+        birthDate: DateTime(1990, 1, 1),
       );
 
       expect(ok, true);
@@ -105,7 +110,7 @@ void main() {
 
   group('CloudController login', () {
     test('login stores session and unwraps DEK from export', () async {
-      // Prepara un utente registrato: salt+DEK sul server (simulato in store)
+      // Prepare a registered user: salt+DEK on the server (simulated in store)
       final dek = await crypto.generateDek();
       final salt = await crypto.generateSalt();
       final kek = await crypto.deriveKek(password: 'password123', salt: [
@@ -114,7 +119,7 @@ void main() {
       final wrapped = await crypto.wrapDek(dek: dek, kek: kek);
 
       when(() => api.login(
-            username: any(named: 'username'),
+            identifier: any(named: 'identifier'),
             password: any(named: 'password'),
           )).thenAnswer((_) async => _session());
       when(() => api.exportData(any()))
@@ -126,7 +131,7 @@ void main() {
               });
 
       final ok = await controller.loginCloud(
-        username: 'mario',
+        identifier: 'mario',
         password: 'password123',
       );
 
@@ -142,7 +147,7 @@ void main() {
 
     test('login failure keeps state disconnected', () async {
       when(() => api.login(
-            username: any(named: 'username'),
+            identifier: any(named: 'identifier'),
             password: any(named: 'password'),
           )).thenThrow(const CloudApiFailure(
         statusCode: 401,
@@ -150,7 +155,7 @@ void main() {
         message: 'invalid_credentials',
       ));
       final ok = await controller.loginCloud(
-        username: 'mario',
+        identifier: 'mario',
         password: 'wrong',
       );
       expect(ok, false);

@@ -22,7 +22,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final _nameController = TextEditingController();
   final _surnameController = TextEditingController();
   final _passwordController = TextEditingController();
-  DateTime _birthDate = DateTime.now().subtract(const Duration(days: 365 * 20));
+  DateTime? _birthDate;
+  bool _birthDateError = false;
 
   @override
   void dispose() {
@@ -36,11 +37,18 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_birthDate == null) {
+      setState(() => _birthDateError = true);
+      return;
+    }
     final cloud = context.read<CloudController>();
     final success = await cloud.registerCloud(
-      username: _usernameController.text,
+      username: _usernameController.text.trim(),
       email: _emailController.text.trim(),
       password: _passwordController.text,
+      name: _nameController.text.trim(),
+      surname: _surnameController.text.trim(),
+      birthDate: _birthDate!,
     );
     if (success && mounted) {
       Navigator.pushReplacementNamed(context, '/home');
@@ -58,11 +66,16 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<void> _pickBirthDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _birthDate,
+      initialDate: _birthDate ?? DateTime(2000),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-    if (picked != null) setState(() => _birthDate = picked);
+    if (picked != null) {
+      setState(() {
+        _birthDate = picked;
+        _birthDateError = false;
+      });
+    }
   }
 
   @override
@@ -72,9 +85,10 @@ class _RegisterPageState extends State<RegisterPage> {
         ? null
         : controller.errorCode == 'network_error'
             ? 'Server unreachable. Check your connection.'
-            : controller.errorCode == 'username_taken'
-                ? 'Username already taken.'
-                : 'Registration failed. Try again.';
+            : (controller.errorCode == 'username_taken' ||
+                    controller.errorCode == 'conflict')
+                ? 'Username or email already taken.'
+                : 'Registration failed (${controller.errorCode}). Try again.';
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -190,7 +204,9 @@ class _RegisterPageState extends State<RegisterPage> {
                               color: Colors.white.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(24),
                               border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.06),
+                                color: _birthDateError
+                                    ? AppColors.danger
+                                    : Colors.white.withValues(alpha: 0.06),
                               ),
                             ),
                             child: Row(
@@ -202,10 +218,15 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
-                                  DateFormat('dd/MM/yyyy').format(_birthDate),
-                                  style: const TextStyle(
+                                  _birthDate == null
+                                      ? 'Birth date'
+                                      : DateFormat('dd/MM/yyyy')
+                                          .format(_birthDate!),
+                                  style: TextStyle(
                                     fontSize: 15,
-                                    color: AppColors.textPrimary,
+                                    color: _birthDate == null
+                                        ? AppColors.textSecondary
+                                        : AppColors.textPrimary,
                                   ),
                                 ),
                                 const Spacer(),
@@ -221,6 +242,17 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           ),
                         ),
+                        if (_birthDateError)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 6, left: 12),
+                            child: Text(
+                              'Required',
+                              style: TextStyle(
+                                color: AppColors.danger,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
                         TextFormField(
                           controller: _passwordController,
                           obscureText: true,

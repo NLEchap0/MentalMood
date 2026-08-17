@@ -37,7 +37,7 @@ void main() {
         );
       });
       final api = AuthApiClient(client: client);
-      final session = await api.login(username: 'mario', password: 'pw');
+      final session = await api.login(identifier: 'mario', password: 'pw');
       expect(session.accessToken, 'at');
       expect(session.refreshToken, 'rt');
       expect(session.syncKey.length, 64);
@@ -53,14 +53,15 @@ void main() {
           ));
       final api = AuthApiClient(client: client);
       await expectLater(
-        api.login(username: 'm', password: 'x'),
+        api.login(identifier: 'm', password: 'x'),
         throwsA(isA<CloudApiFailure>()
             .having((e) => e.statusCode, 'statusCode', 401)
             .having((e) => e.code, 'code', 'auth_error')),
       );
     });
 
-    test('register sends kek_salt, email and wrapped_dek', () async {
+    test('register sends kek_salt, email, wrapped_dek and profile ciphers',
+        () async {
       late http.Request captured;
       final client = MockClient((request) async {
         captured = request;
@@ -73,11 +74,17 @@ void main() {
         email: 'mario@example.com',
         kekSalt: 'a' * 32,
         wrappedDek: 'b64',
+        nameCipher: 'name-cipher',
+        surnameCipher: 'surname-cipher',
+        birthDateCipher: 'birth-date-cipher',
       );
       final body = jsonDecode(captured.body) as Map<String, dynamic>;
       expect(body['kek_salt'], 'a' * 32);
       expect(body['wrapped_dek'], 'b64');
       expect(body['email'], 'mario@example.com');
+      expect(body['name_cipher'], 'name-cipher');
+      expect(body['surname_cipher'], 'surname-cipher');
+      expect(body['birth_date_cipher'], 'birth-date-cipher');
     });
 
     test('subscription parses info', () async {
@@ -139,7 +146,7 @@ void main() {
       final client = MockClient((_) async => throw Exception('boom'));
       final api = AuthApiClient(client: client);
       await expectLater(
-        api.login(username: 'm', password: 'x'),
+        api.login(identifier: 'm', password: 'x'),
         throwsA(isA<CloudApiFailure>()
             .having((e) => e.statusCode, 'statusCode', 0)
             .having((e) => e.code, 'code', 'network_error')),

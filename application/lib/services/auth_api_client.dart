@@ -3,14 +3,14 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
-/// URL base dell'API. Su emulatore Android `10.0.2.2` = host locale.
-/// Su produzione IONOS senza mod_rewrite gli endpoint vanno chiamati
-/// come `/index.php/<endpoint>` (la DirectoryIndex gestisce la root).
+/// API Base URL. On Android emulator `10.0.2.2` = localhost.
+/// On IONOS production without mod_rewrite, endpoints must be called
+/// as `/index.php/<endpoint>` (DirectoryIndex handles the root).
 String apiBaseUrl() =>
     dotenv.maybeGet('API_BASE_URL') ?? 'http://10.0.2.2:8090';
 
-/// Ritorna l'URL completo per un path API, gestendo il deploy IONOS
-/// senza mod_rewrite (via `/index.php/<endpoint>`).
+/// Returns the full URL for an API path, handling IONOS deployment
+/// without mod_rewrite (via `/index.php/<endpoint>`).
 String apiEndpoint(String path) {
   final base = apiBaseUrl().replaceAll(RegExp(r'/+$'), '');
   final normalized = path.startsWith('/') ? path : '/$path';
@@ -107,6 +107,9 @@ class AuthApiClient {
     required String email,
     required String kekSalt,
     required String wrappedDek,
+    required String nameCipher,
+    required String surnameCipher,
+    required String birthDateCipher,
   }) async {
     return _guard(() async {
       final response = await _client.post(
@@ -118,6 +121,9 @@ class AuthApiClient {
           'email': email,
           'kek_salt': kekSalt,
           'wrapped_dek': wrappedDek,
+          'name_cipher': nameCipher,
+          'surname_cipher': surnameCipher,
+          'birth_date_cipher': birthDateCipher,
         }),
       );
       if (response.statusCode == 201) {
@@ -128,14 +134,14 @@ class AuthApiClient {
   }
 
   Future<AuthSession> login({
-    required String username,
+    required String identifier,
     required String password,
   }) async {
     return _guard(() async {
       final response = await _client.post(
         Uri.parse(apiEndpoint('/login')),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'username': username, 'password': password}),
+        body: jsonEncode({'username': identifier, 'password': password}),
       );
       if (response.statusCode == 200) {
         return _sessionFromJson(
@@ -146,7 +152,7 @@ class AuthApiClient {
     });
   }
 
-  /// Ruota i token: il server revoca il refresh usato e ne emette uno nuovo.
+  /// Rotates tokens: the server revokes the used refresh token and issues a new one.
   Future<AuthSession> refresh(String refreshToken) async {
     return _guard(() async {
       final response = await _client.post(
@@ -178,7 +184,7 @@ class AuthApiClient {
     });
   }
 
-  /// Crea una Checkout Session Stripe e restituisce l'URL di pagamento.
+  /// Creates a Stripe Checkout Session and returns the payment URL.
   Future<String> checkout({
     required String accessToken,
     required String plan,
@@ -204,7 +210,7 @@ class AuthApiClient {
     });
   }
 
-  /// Richiede il reset password (username o email). Sempre 200 lato server.
+  /// Requests password reset (username or email). Always 200 on the server side.
   Future<void> requestPasswordReset(String identifier) async {
     return _guard(() async {
       final response = await _client.post(
@@ -285,12 +291,24 @@ class AuthApiClient {
     String code = 'unknown';
     String message = '';
     try {
-      final error =
-          (jsonDecode(response.body) as Map<String, dynamic>)['error']
-              as Map<String, dynamic>;
-      code = (error['code'] as String?) ?? 'unknown';
-      message = (error['message'] as String?) ?? '';
-    } catch (_) {
+      final body = jsonDecode(response.body);
+      print('DEBUG API FAILURE: Status ${response.statusCode}, Body: $body');
+      if (body is Map) {
+        if (body.containsKey('error')) {
+          final error = body['error'];
+          if (error is Map) {
+            code = (error['code'] as String?) ?? 'unknown';
+            message = (error['message'] as String?) ?? '';
+          } else {
+            code = error.toString();
+          }
+        } else if (body.containsKey('code')) {
+          code = body['code'].toString();
+          message = body['message']?.toString() ?? '';
+        }
+      }
+    } catch (e) {
+      print('DEBUG API FAILURE PARSE ERROR: $e, Raw Body: ${response.body}');
       code = response.statusCode >= 500 ? 'server_error' : 'unknown';
     }
     return CloudApiFailure(

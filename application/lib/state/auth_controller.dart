@@ -2,9 +2,9 @@ import 'package:application/data/repositories/user_repository.dart';
 import 'package:application/domain/models.dart';
 import 'package:flutter/foundation.dart';
 
-/// Sessione utente. L'account reale è il cloud: questo controller gestisce
-/// solo la cache drift locale (id/username derivati dalla sessione cloud)
-/// usata dalle mood entries e dalla UI. Non autentica più nulla.
+/// User session. The real account is on the cloud: this controller manages
+/// only the local drift cache (id/username derived from the cloud session)
+/// used by mood entries and the UI. It no longer authenticates anything.
 class AuthController extends ChangeNotifier {
   final UserRepository userRepository;
 

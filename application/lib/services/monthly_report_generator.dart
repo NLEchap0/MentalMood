@@ -56,19 +56,19 @@ class MonthlyReportGenerator {
         build: (context) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Text('MentalMood — Report mensile',
+            pw.Text('MentalMood — Monthly Report',
                 style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
             pw.SizedBox(height: 8),
             pw.Text('$month/$year', style: const pw.TextStyle(fontSize: 14)),
             pw.SizedBox(height: 16),
-            pw.Text('Entry registrate: $count'),
-            pw.Text('Media umore: ${avg.toStringAsFixed(1)} (1-10)'),
-            pw.Text('Minimo: $min — Massimo: $max'),
-            pw.Text('Bassi (1-3): $low — Medi (4-7): $mid — Alti (8-10): $high'),
+            pw.Text('Registered entries: $count'),
+            pw.Text('Average mood: ${avg.toStringAsFixed(1)} (1-10)'),
+            pw.Text('Minimum: $min — Maximum: $max'),
+            pw.Text('Low (1-3): $low — Mid (4-7): $mid — High (8-10): $high'),
             pw.SizedBox(height: 24),
             pw.Text(
-              'Questo report è generato automaticamente dai tuoi dati. '
-              'Non sostituisce il parere di un professionista sanitario.',
+              'This report is automatically generated from your data. '
+              'It does not replace the advice of a healthcare professional.',
               style: const pw.TextStyle(fontSize: 10, fontStyle: pw.FontStyle.italic),
             ),
           ],

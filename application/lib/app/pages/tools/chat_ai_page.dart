@@ -5,7 +5,7 @@ import 'package:application/state/cloud_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-/// Chat AI a schermo intero, come nelle app di benessere.
+/// Full-screen AI chat, similar to wellness apps.
 class ChatAiPage extends StatefulWidget {
   const ChatAiPage({super.key});
 
@@ -65,10 +65,10 @@ class _ChatAiPageState extends State<ChatAiPage> {
         _messages.add((
           role: 'ai',
           text: controller.state == AiState.paymentRequired
-              ? "Questa funzione richiede l'abbonamento Pro."
+              ? "This feature requires a Pro subscription."
               : controller.state == AiState.consentRequired
-                  ? 'Per usare la chat devi attivare il consenso AI.'
-                  : 'Si è verificato un errore. Riprova.',
+                  ? 'To use the chat, you must enable AI consent.'
+                  : 'An error occurred. Please try again.',
         ));
       }
     });
@@ -99,8 +99,8 @@ class _ChatAiPageState extends State<ChatAiPage> {
                     child: Padding(
                       padding: EdgeInsets.all(32),
                       child: Text(
-                        'Parla con il tuo assistente di benessere.\n'
-                        'Chiedi consigli, sfogati o esplora i tuoi pensieri.',
+                        'Talk to your wellness assistant.\n'
+                        'Ask for advice, vent or explore your thoughts.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: AppColors.textFaint),
                       ),
@@ -158,7 +158,7 @@ class _ChatAiPageState extends State<ChatAiPage> {
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _send(),
                       decoration: const InputDecoration(
-                        hintText: 'Scrivi un messaggio…',
+                        hintText: 'Type a message…',
                       ),
                     ),
                   ),

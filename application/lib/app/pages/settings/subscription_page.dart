@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Pagina piani: scegli Standard o Pro e paga con Stripe (checkout in-app).
-/// Mostra sempre il piano attuale dell'utente.
+/// Plan page: choose Standard or Pro and pay with Stripe (in-app checkout).
+/// Always shows the user's current plan.
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({super.key});
 
@@ -24,7 +24,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   @override
   void initState() {
     super.initState();
-    // Default: Pro selezionato (il piano raccomandato).
+    // Default: Pro selected (recommended plan).
     _selectedPlan = 'pro';
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await context.read<CloudController>().refreshSubscription();
@@ -40,12 +40,12 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     final session = cloud.session;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Piani')),
+      appBar: AppBar(title: const Text('Plans')),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
           const Text(
-            'Scegli il piano che fa per te',
+            'Choose the right plan for you',
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 18,
@@ -55,9 +55,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           const SizedBox(height: 6),
           Text(
             info == null
-                ? 'Carica il tuo piano…'
-                : 'Piano attuale: ${_planLabel(currentPlan)}'
-                    '${info.status == 'trialing' ? ' (prova gratuita)' : ''}',
+                ? 'Loading your plan…'
+                : 'Current plan: ${_planLabel(currentPlan)}'
+                    '${info.status == 'trialing' ? ' (free trial)' : ''}',
             style: const TextStyle(color: AppColors.textFaint, fontSize: 13),
           ),
           const SizedBox(height: 12),
@@ -71,9 +71,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               ),
             ),
             child: const Text(
-              'Con Pro il tuo diario prende vita: l\'AI capisce i tuoi '
-              'pattern e ti guida ogni giorno con consigli concreti. '
-              'È il piano scelto dalla maggior parte degli utenti.',
+              'With Pro, your journal comes to life: AI understands your '
+              'patterns and guides you every day with concrete advice. '
+              'It is the plan chosen by most users.',
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12.5,
@@ -94,12 +94,12 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             plan: 'free',
             title: 'Free',
             price: '€0',
-            period: 'per sempre',
+            period: 'forever',
             features: const [
-              'Check-in giornalieri illimitati',
-              'Statistiche e streak',
-              'Questionari PHQ-9 e GAD-7',
-              'Export dati (GDPR)',
+              'Unlimited daily check-ins',
+              'Statistics and streaks',
+              'PHQ-9 and GAD-7 questionnaires',
+              'Data export (GDPR)',
             ],
             isCurrent: currentPlan == 'free',
             onSelect: currentPlan == 'free' ? null : null,
@@ -108,13 +108,13 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           _planCard(
             plan: 'standard',
             title: 'Standard',
-            price: '€3,99',
-            period: 'al mese',
+            price: '€3.99',
+            period: 'per month',
             features: const [
-              'Tutto di Free',
-              'Backup cloud end-to-end criptato',
-              'Sync tra dispositivi',
-              'Widget home screen',
+              'Everything in Free',
+              'End-to-end encrypted cloud backup',
+              'Sync across devices',
+              'Home screen widget',
             ],
             isCurrent: currentPlan == 'standard',
             isSelected: _selectedPlan == 'standard',
@@ -124,15 +124,15 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           _planCard(
             plan: 'pro',
             title: 'Pro',
-            price: '€9,99',
-            period: 'al mese',
-            badge: 'Più scelto',
+            price: '€9.99',
+            period: 'per month',
+            badge: 'Most Popular',
             features: const [
-              'Tutto di Standard',
-              'Chat AI illimitata',
-              'Diario CBT guidato',
-              'Insight e consigli personalizzati',
-              'Report condivisibile',
+              'Everything in Standard',
+              'Unlimited AI chat',
+              'Guided CBT diary',
+              'Insights and personalized advice',
+              'Shareable reports',
             ],
             isCurrent: currentPlan == 'pro',
             isSelected: _selectedPlan == 'pro',
@@ -141,10 +141,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           const SizedBox(height: 24),
           AppButton(
             label: session == null
-                ? 'Collega il tuo account per continuare'
+                ? 'Connect your account to continue'
                 : (currentPlan != 'free' && _selectedPlan == currentPlan
-                    ? 'Il tuo piano è già attivo'
-                    : 'Paga con Stripe · $_selectedPlan'),
+                    ? 'Your plan is already active'
+                    : 'Pay with Stripe · $_selectedPlan'),
             onPressed: _processing
                 ? null
                 : () {
@@ -152,8 +152,8 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            'Collega il tuo account cloud dalla pagina Profilo '
-                            'prima di acquistare un piano.',
+                            'Connect your cloud account from the Profile page '
+                            'before purchasing a plan.',
                           ),
                         ),
                       );
@@ -165,8 +165,8 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Prova gratuita di 14 giorni su Standard e Pro. '
-            'Puoi annullare quando vuoi.',
+            '14-day free trial on Standard and Pro. '
+            'Cancel anytime.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textFaint, fontSize: 11.5),
           ),
@@ -266,7 +266,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
-                        'Attivo',
+                        'Active',
                         style: TextStyle(
                           color: AppColors.success,
                           fontSize: 11,
@@ -351,34 +351,34 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       );
       if (!launched) {
         setState(() {
-          _error = 'Impossibile aprire il pagamento. Riprova.';
+          _error = 'Unable to open payment. Please try again.';
         });
       }
-      // Dopo il ritorno dal checkout, aggiorna lo stato del piano.
+      // After returning from checkout, update the plan status.
       await Future<void>.delayed(const Duration(seconds: 2));
       await cloud.refreshSubscription();
       await auth.refreshProfile();
-      // Se ora è Pro, invita al consenso AI.
+      // If now Pro, invite to AI consent.
       final plan = cloud.subscription?.plan ?? cloud.session?.plan;
       if (plan == 'pro' && !cloud.consentEnabled && mounted) {
         final wantConsent = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Attiva le funzioni AI?'),
+            title: const Text('Enable AI features?'),
             content: const Text(
-              'Vuoi permettere all\'AI di analizzare i tuoi dati di umore '
-              'per offrirti insight e consigli personalizzati?\n\n'
-              'Puoi revocare il consenso in qualsiasi momento dalle '
-              'impostazioni.',
+              'Do you want to allow the AI to analyze your mood data '
+              'to offer you personalized insights and advice?\n\n'
+              'You can revoke consent at any time from the '
+              'settings.',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Non ora'),
+                child: const Text('Not now'),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Attiva'),
+                child: const Text('Enable'),
               ),
             ],
           ),
@@ -390,9 +390,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     } on CloudApiFailure catch (e) {
       setState(() {
         _error = switch (e.code) {
-          'plan_invalid' => 'Piano non valido.',
-          'network_error' => 'Server non raggiungibile. Controlla la connessione.',
-          _ => 'Errore: ${e.code}',
+          'plan_invalid' => 'Invalid plan.',
+          'network_error' => 'Server unreachable. Check your connection.',
+          _ => 'Error: ${e.code}',
         };
       });
       if (mounted) {
@@ -402,7 +402,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       }
     } catch (e) {
       setState(() {
-        _error = 'Si è verificato un errore inatteso. Riprova.';
+        _error = 'An unexpected error occurred. Please try again.';
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

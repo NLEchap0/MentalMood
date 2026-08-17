@@ -5,7 +5,7 @@ import 'package:application/state/cloud_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-/// Insight settimanali/mensili a schermo intero.
+/// Full-screen weekly/monthly insights.
 class InsightsPage extends StatefulWidget {
   const InsightsPage({super.key});
 
@@ -38,14 +38,14 @@ class _InsightsPageState extends State<InsightsPage> {
     final insights = controller.insights;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Insight')),
+      appBar: AppBar(title: const Text('Insights')),
       body: insights.isEmpty
           ? const Center(
               child: Padding(
                 padding: EdgeInsets.all(32),
                 child: Text(
-                  'Nessun insight ancora disponibile. Gli insight vengono '
-                  'generati periodicamente dai tuoi dati.',
+                  'No insights available yet. Insights are '
+                  'periodically generated from your data.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppColors.textFaint),
                 ),
@@ -62,7 +62,7 @@ class _InsightsPageState extends State<InsightsPage> {
                   child: ListTile(
                     leading: const Icon(Icons.insights, color: AppColors.accent),
                     title: Text(
-                      insight.kind == 'weekly' ? 'Settimanale' : 'Mensile',
+                      insight.kind == 'weekly' ? 'Weekly' : 'Monthly',
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     subtitle: Padding(
