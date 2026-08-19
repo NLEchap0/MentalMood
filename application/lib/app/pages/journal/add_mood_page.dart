@@ -3,12 +3,16 @@ import 'package:application/app/theme/app_icons.dart';
 import 'package:application/app/theme/app_theme.dart';
 import 'package:application/app/widgets/app_background.dart';
 import 'package:application/app/widgets/app_button.dart';
+import 'package:application/app/widgets/app_toast.dart';
 import 'package:application/app/widgets/entrance_stagger.dart';
 import 'package:application/app/widgets/glass_card.dart';
 import 'package:application/app/widgets/refresh_view.dart';
 import 'package:application/app/widgets/section_header.dart';
 import 'package:application/domain/mood_labels.dart';
+import 'package:application/services/auth_api_client.dart';
+import 'package:application/services/sync_service.dart';
 import 'package:application/state/auth_controller.dart';
+import 'package:application/state/cloud_controller.dart';
 import 'package:application/state/mood_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -52,15 +56,35 @@ class _AddMoodPageState extends State<AddMoodPage> {
     );
     if (!mounted) return;
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Check-in saved. Well done.')),
-      );
-      Navigator.pop(context);
+      if (mounted) AppToast.show(context, 'Check-in saved. Well done.', type: AppToastType.success);
+      // Trigger background sync
+      _triggerSync();
+      if (mounted) Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not save. Please try again.')),
-      );
+      if (mounted) AppToast.show(context, 'Could not save. Please try again.', type: AppToastType.error);
     }
+  }
+
+  Future<void> _triggerSync() async {
+    final cloud = context.read<CloudController>();
+    final session = cloud.session;
+    final dek = await cloud.cloudDek();
+    if (session == null || dek == null || !session.canSync) return;
+    if (!mounted) return;
+    final user = context.read<AuthController>().currentUser;
+    if (user == null) return;
+
+    // Fire and forget sync in background
+    if (!mounted) return;
+    context.read<SyncService>().sync(
+          userId: user.id,
+          credentials: SyncCredentials(
+            accessToken: session.accessToken,
+            syncKey: session.syncKey,
+            dek: dek,
+          ),
+          baseUrl: apiBaseUrl().replaceAll(RegExp(r'/+$'), ''),
+        );
   }
 
   @override
@@ -83,7 +107,7 @@ class _AddMoodPageState extends State<AddMoodPage> {
             onRefresh: _refresh,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
+                parent: ClampingScrollPhysics(),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Center(

@@ -50,59 +50,78 @@ class _CbtDiaryPageState extends State<CbtDiaryPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('CBT Diary')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              "Describe the negative thought and the situation: AI helps you "
-              'identify distortions and restructure it.',
-              style: TextStyle(color: AppColors.textFaint, fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _situationController,
-              decoration: const InputDecoration(labelText: 'Situation'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _thoughtController,
-              decoration: const InputDecoration(labelText: 'Thought'),
-            ),
-            const SizedBox(height: 20),
-            AppButton(
-              label: 'Restructure',
-              isLoading: controller.state == AiState.loading,
-              onPressed: _submit,
-            ),
-            if (controller.lastReply != null) ...[
-              const SizedBox(height: 24),
-              const Text(
-                'Restructuring',
-                style: TextStyle(
-                  color: AppColors.accent,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  "Describe the negative thought and the situation: AI helps you "
+                  'identify distortions and restructure it.',
+                  style: TextStyle(color: AppColors.textFaint, fontSize: 13, height: 1.4),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  controller.lastReply!,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    height: 1.4,
+                const SizedBox(height: 24),
+                TextField(
+                  controller: _situationController,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: const InputDecoration(
+                    labelText: 'Situation',
+                    hintText: 'What happened?',
                   ),
                 ),
-              ),
-            ],
-          ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _thoughtController,
+                  maxLines: 2,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: const InputDecoration(
+                    labelText: 'Negative Thought',
+                    hintText: 'What are you telling yourself?',
+                  ),
+                ),
+                const SizedBox(height: 24),
+                AppButton(
+                  label: 'Restructure Thought',
+                  icon: Icons.auto_awesome_rounded,
+                  isLoading: controller.state == AiState.loading,
+                  onPressed: _submit,
+                ),
+                if (controller.lastReply != null) ...[
+                  const SizedBox(height: 32),
+                  const Text(
+                    'RESTRUCTURING',
+                    style: TextStyle(
+                      color: AppColors.accent,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.accent.withValues(alpha: 0.15)),
+                    ),
+                    child: Text(
+                      controller.lastReply!,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        height: 1.5,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );

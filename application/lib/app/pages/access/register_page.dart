@@ -1,6 +1,7 @@
 import 'package:application/app/theme/app_colors.dart';
 import 'package:application/app/widgets/app_background.dart';
 import 'package:application/app/widgets/app_button.dart';
+import 'package:application/app/widgets/app_logo.dart';
 import 'package:application/app/widgets/entrance_stagger.dart';
 import 'package:application/app/widgets/refresh_view.dart';
 import 'package:application/state/cloud_controller.dart';
@@ -88,7 +89,7 @@ class _RegisterPageState extends State<RegisterPage> {
             : (controller.errorCode == 'username_taken' ||
                     controller.errorCode == 'conflict')
                 ? 'Username or email already taken.'
-                : 'Registration failed (${controller.errorCode}). Try again.';
+                : 'Registration failed. Please try again.';
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -99,7 +100,7 @@ class _RegisterPageState extends State<RegisterPage> {
             onRefresh: _refresh,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
+                parent: ClampingScrollPhysics(),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Center(
@@ -111,6 +112,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       spacing: 24,
                       children: [
+                        const SizedBox(height: 16),
+                        const AppLogo(size: 90),
                         const Text(
                           'Start your mindful journaling.',
                           style: TextStyle(

@@ -8,6 +8,7 @@ import 'package:application/app/theme/animations.dart';
 import 'package:application/app/widgets/app_background.dart';
 import 'package:application/app/widgets/empty_state.dart';
 import 'package:application/app/widgets/glass_card.dart';
+import 'package:application/app/widgets/refresh_view.dart';
 import 'package:application/domain/models.dart';
 import 'package:application/domain/mood_labels.dart';
 import 'package:application/state/auth_controller.dart';
@@ -20,14 +21,39 @@ class MoodHistoryPage extends StatefulWidget {
   const MoodHistoryPage({super.key});
 
   @override
-  State<MoodHistoryPage> createState() => _MoodHistoryPageState();
+  State<MoodHistoryPage> createState() => MoodHistoryPageState();
 }
 
-class _MoodHistoryPageState extends State<MoodHistoryPage> {
+class MoodHistoryPageState extends State<MoodHistoryPage> {
   String _searchText = '';
   bool _isFilterExpanded = false;
   RangeValues _scoreRange = const RangeValues(1, 10);
   final List<String> _selectedTags = [];
+  
+  int _currentPage = 0;
+  static const int _itemsPerPage = 20;
+
+  bool get _isFiltered =>
+      _searchText.isNotEmpty ||
+      _scoreRange.start != 1 ||
+      _scoreRange.end != 10 ||
+      _selectedTags.isNotEmpty;
+
+  void resetFilters() {
+    setState(() {
+      _searchText = '';
+      _scoreRange = const RangeValues(1, 10);
+      _selectedTags.clear();
+      _currentPage = 0;
+      _isFilterExpanded = false; // Also close the menu
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // No need to call resetFilters here since it's already the default state
+  }
 
   List<MoodEntry> _filter(List<MoodEntry> history) {
     return history.where((e) {
@@ -48,81 +74,104 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
   @override
   Widget build(BuildContext context) {
     final moodController = context.watch<MoodController>();
-    final history = _filter(moodController.moodHistory);
+    final allFiltered = _filter(moodController.moodHistory);
+    
+    final totalPages = (allFiltered.length / _itemsPerPage).ceil();
+    if (_currentPage >= totalPages && totalPages > 0) {
+      _currentPage = totalPages - 1;
+    }
+    
+    final startIndex = _currentPage * _itemsPerPage;
+    final endIndex = (startIndex + _itemsPerPage).clamp(0, allFiltered.length);
+    final historyPage = allFiltered.isEmpty ? <MoodEntry>[] : allFiltered.sublist(startIndex, endIndex);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: const Text('Journal'),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _isFilterExpanded
-                  ? Icons.filter_alt_rounded
-                  : Icons.filter_list_rounded,
-              color: _isFilterExpanded
-                  ? AppColors.accent
-                  : AppColors.textSecondary,
-            ),
-            onPressed: () =>
-                setState(() => _isFilterExpanded = !_isFilterExpanded),
-            tooltip: 'Filter entries',
-          ),
-          const SizedBox(width: 12),
-        ],
-      ),
       body: AppBackground(
         child: Column(
           children: [
-            const SizedBox(height: 100),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-              child: TextField(
-                onChanged: (v) => setState(() => _searchText = v),
-                style: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textPrimary,
-                  fontSize: 15,
-                ),
-                decoration: const InputDecoration(
-                  hintText: 'Search entries...',
-                  prefixIcon: Icon(
-                    Icons.search_rounded,
-                    color: AppColors.textFaint,
-                    size: 20,
+            // FIXED HEADER (Consistent with Home)
+            SafeArea(
+              bottom: false,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 640),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildJournalHeader(),
+                        const SizedBox(height: 16),
+                        _buildSearchRow(),
+                        AnimatedSize(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                          child: _isFilterExpanded
+                              ? Padding(
+                                  padding: const EdgeInsets.only(top: 16),
+                                  child: _buildFilterPanel(context, moodController),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-            if (_isFilterExpanded) _buildFilterPanel(context, moodController),
+            
+            // SCROLLABLE CONTENT (Full width for scrollbar edge alignment)
             Expanded(
-              child: RefreshIndicator(
+              child: RefreshView(
                 onRefresh: () async {
                   final user = context.read<AuthController>().currentUser;
                   if (user != null) {
                     await moodController.fetchMoodHistory(user.id);
                   }
                 },
-                color: AppColors.accent,
-                backgroundColor: AppColors.surface,
-                child: history.isEmpty
-                    ? _buildEmptyState(context, moodController)
+                child: allFiltered.isEmpty
+                    ? Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 640),
+                          child: _buildEmptyState(context, moodController),
+                        ),
+                      )
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(24, 8, 24, 160),
+                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 160),
                         physics: const AlwaysScrollableScrollPhysics(
-                          parent: BouncingScrollPhysics(),
+                          parent: ClampingScrollPhysics(),
                         ),
-                        itemCount: history.length,
-                        itemBuilder: (context, index) => FadeInSlide(
-                          duration: const Duration(milliseconds: 400),
-                          delay: (index * 20).clamp(0, 400),
-                          direction: const Offset(15, 0),
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
-                            child: _JournalEntryTile(entry: history[index]),
-                          ),
-                        ),
+                        itemCount: historyPage.length + (totalPages > 1 ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          // Pagination row as last item
+                          if (index == historyPage.length) {
+                            return Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 640),
+                                child: _buildPagination(totalPages),
+                              ),
+                            );
+                          }
+
+                          final entry = historyPage[index];
+
+                          return Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 640),
+                              child: FadeInSlide(
+                                duration: const Duration(milliseconds: 250),
+                                delay: (index * 5).clamp(0, 150),
+                                direction: const Offset(10, 0),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _JournalEntryTile(entry: entry),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
               ),
             ),
@@ -132,11 +181,148 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
     );
   }
 
+  Widget _buildPagination(int totalPages) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _PageBtn(
+            icon: Icons.chevron_left_rounded,
+            enabled: _currentPage > 0,
+            onTap: () => setState(() => _currentPage--),
+          ),
+          const SizedBox(width: 24),
+          Text(
+            'PAGE ${_currentPage + 1} OF $totalPages',
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.5,
+              color: AppColors.textFaint,
+            ),
+          ),
+          const SizedBox(width: 24),
+          _PageBtn(
+            icon: Icons.chevron_right_rounded,
+            enabled: _currentPage < totalPages - 1,
+            onTap: () => setState(() => _currentPage++),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildJournalHeader() {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                DateFormat('EEEE, d MMMM').format(DateTime.now()).toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                  color: AppColors.textFaint,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Journal',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (_isFiltered) ...[
+          GestureDetector(
+            onTap: resetFilters,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.accent.withValues(alpha: 0.15)),
+              ),
+              child: const Text(
+                'CLEAR',
+                style: TextStyle(
+                  color: AppColors.accent,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+        Stack(
+          children: [
+            IconButton(
+              icon: Icon(
+                _isFilterExpanded
+                    ? Icons.filter_alt_rounded
+                    : Icons.filter_list_rounded,
+                color: _isFilterExpanded ? AppColors.accent : AppColors.textSecondary,
+              ),
+              onPressed: () => setState(() => _isFilterExpanded = !_isFilterExpanded),
+              tooltip: 'Filter entries',
+            ),
+            if (_isFiltered && !_isFilterExpanded)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: AppColors.gold,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchRow() {
+    return TextField(
+      onChanged: (v) => setState(() {
+        _searchText = v;
+        _currentPage = 0; // Reset to first page on search
+      }),
+      style: const TextStyle(
+        fontWeight: FontWeight.w500,
+        color: AppColors.textPrimary,
+        fontSize: 15,
+      ),
+      decoration: const InputDecoration(
+        hintText: 'Search entries...',
+        prefixIcon: Icon(
+          Icons.search_rounded,
+          color: AppColors.textFaint,
+          size: 20,
+        ),
+      ),
+    );
+  }
+
   Widget _buildFilterPanel(BuildContext context, MoodController controller) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      padding: const EdgeInsets.only(bottom: 20),
       child: GlassCard(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -166,7 +352,10 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
               min: 1,
               max: 10,
               divisions: 9,
-              onChanged: (v) => setState(() => _scoreRange = v),
+              onChanged: (v) => setState(() {
+                _scoreRange = v;
+                _currentPage = 0; // Reset to first page on filter
+              }),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -203,6 +392,7 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
                       ),
                       selected: isSelected,
                       onSelected: (selected) => setState(() {
+                        _currentPage = 0; // Reset to first page on tag selection
                         if (selected) {
                           _selectedTags.add(tag.label);
                         } else {
@@ -239,6 +429,42 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
           onAction: hasAny
               ? null
               : () => AppNavigator.push(context, const AddMoodPage()),
+        ),
+      ),
+    );
+  }
+}
+
+class _PageBtn extends StatelessWidget {
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _PageBtn({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(12),
+        child: Opacity(
+          opacity: enabled ? 1.0 : 0.3,
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            child: Icon(icon, color: AppColors.textPrimary, size: 20),
+          ),
         ),
       ),
     );

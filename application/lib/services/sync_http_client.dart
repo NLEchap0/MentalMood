@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:application/data/sync/sync_models.dart';
+import 'package:application/services/auth_api_client.dart';
 import 'package:cryptography/cryptography.dart';
 import 'package:http/http.dart' as http;
 
@@ -27,16 +28,10 @@ class HttpSyncClient implements SyncHttpClient {
   }) async {
     final raw = jsonEncode(body);
     final signature = await _hmacHex(syncKey, raw);
-    var normalized = baseUrl;
-    if (normalized.endsWith('/')) {
-      normalized = normalized.substring(0, normalized.length - 1);
-    }
-    // On IONOS production without mod_rewrite, sync goes through /index.php/sync.
-    final uri = Uri.parse(
-      normalized.contains('webdevinnovations.ch')
-          ? '$normalized/index.php/sync'
-          : '$normalized/sync',
-    );
+    
+    // Use the central apiEndpoint logic for consistency
+    final uri = Uri.parse(apiEndpoint('/sync'));
+
     try {
       final response = await _client.post(
         uri,

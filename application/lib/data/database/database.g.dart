@@ -33,6 +33,15 @@ class $UserTable extends User with TableInfo<$UserTable, UserData> {
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
   );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -79,6 +88,7 @@ class $UserTable extends User with TableInfo<$UserTable, UserData> {
   List<GeneratedColumn> get $columns => [
     id,
     username,
+    email,
     name,
     surname,
     password,
@@ -106,6 +116,12 @@ class $UserTable extends User with TableInfo<$UserTable, UserData> {
       );
     } else if (isInserting) {
       context.missing(_usernameMeta);
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -156,6 +172,10 @@ class $UserTable extends User with TableInfo<$UserTable, UserData> {
         DriftSqlType.string,
         data['${effectivePrefix}username'],
       )!,
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      ),
       name: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}name'],
@@ -184,6 +204,7 @@ class $UserTable extends User with TableInfo<$UserTable, UserData> {
 class UserData extends DataClass implements Insertable<UserData> {
   final int id;
   final String username;
+  final String? email;
   final String name;
   final String surname;
   final String password;
@@ -191,6 +212,7 @@ class UserData extends DataClass implements Insertable<UserData> {
   const UserData({
     required this.id,
     required this.username,
+    this.email,
     required this.name,
     required this.surname,
     required this.password,
@@ -201,6 +223,9 @@ class UserData extends DataClass implements Insertable<UserData> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['username'] = Variable<String>(username);
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
     map['name'] = Variable<String>(name);
     map['surname'] = Variable<String>(surname);
     map['password'] = Variable<String>(password);
@@ -212,6 +237,9 @@ class UserData extends DataClass implements Insertable<UserData> {
     return UserCompanion(
       id: Value(id),
       username: Value(username),
+      email: email == null && nullToAbsent
+          ? const Value.absent()
+          : Value(email),
       name: Value(name),
       surname: Value(surname),
       password: Value(password),
@@ -227,6 +255,7 @@ class UserData extends DataClass implements Insertable<UserData> {
     return UserData(
       id: serializer.fromJson<int>(json['id']),
       username: serializer.fromJson<String>(json['username']),
+      email: serializer.fromJson<String?>(json['email']),
       name: serializer.fromJson<String>(json['name']),
       surname: serializer.fromJson<String>(json['surname']),
       password: serializer.fromJson<String>(json['password']),
@@ -239,6 +268,7 @@ class UserData extends DataClass implements Insertable<UserData> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'username': serializer.toJson<String>(username),
+      'email': serializer.toJson<String?>(email),
       'name': serializer.toJson<String>(name),
       'surname': serializer.toJson<String>(surname),
       'password': serializer.toJson<String>(password),
@@ -249,6 +279,7 @@ class UserData extends DataClass implements Insertable<UserData> {
   UserData copyWith({
     int? id,
     String? username,
+    Value<String?> email = const Value.absent(),
     String? name,
     String? surname,
     String? password,
@@ -256,6 +287,7 @@ class UserData extends DataClass implements Insertable<UserData> {
   }) => UserData(
     id: id ?? this.id,
     username: username ?? this.username,
+    email: email.present ? email.value : this.email,
     name: name ?? this.name,
     surname: surname ?? this.surname,
     password: password ?? this.password,
@@ -265,6 +297,7 @@ class UserData extends DataClass implements Insertable<UserData> {
     return UserData(
       id: data.id.present ? data.id.value : this.id,
       username: data.username.present ? data.username.value : this.username,
+      email: data.email.present ? data.email.value : this.email,
       name: data.name.present ? data.name.value : this.name,
       surname: data.surname.present ? data.surname.value : this.surname,
       password: data.password.present ? data.password.value : this.password,
@@ -277,6 +310,7 @@ class UserData extends DataClass implements Insertable<UserData> {
     return (StringBuffer('UserData(')
           ..write('id: $id, ')
           ..write('username: $username, ')
+          ..write('email: $email, ')
           ..write('name: $name, ')
           ..write('surname: $surname, ')
           ..write('password: $password, ')
@@ -287,13 +321,14 @@ class UserData extends DataClass implements Insertable<UserData> {
 
   @override
   int get hashCode =>
-      Object.hash(id, username, name, surname, password, birthDate);
+      Object.hash(id, username, email, name, surname, password, birthDate);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is UserData &&
           other.id == this.id &&
           other.username == this.username &&
+          other.email == this.email &&
           other.name == this.name &&
           other.surname == this.surname &&
           other.password == this.password &&
@@ -303,6 +338,7 @@ class UserData extends DataClass implements Insertable<UserData> {
 class UserCompanion extends UpdateCompanion<UserData> {
   final Value<int> id;
   final Value<String> username;
+  final Value<String?> email;
   final Value<String> name;
   final Value<String> surname;
   final Value<String> password;
@@ -310,6 +346,7 @@ class UserCompanion extends UpdateCompanion<UserData> {
   const UserCompanion({
     this.id = const Value.absent(),
     this.username = const Value.absent(),
+    this.email = const Value.absent(),
     this.name = const Value.absent(),
     this.surname = const Value.absent(),
     this.password = const Value.absent(),
@@ -318,6 +355,7 @@ class UserCompanion extends UpdateCompanion<UserData> {
   UserCompanion.insert({
     this.id = const Value.absent(),
     required String username,
+    this.email = const Value.absent(),
     required String name,
     required String surname,
     required String password,
@@ -330,6 +368,7 @@ class UserCompanion extends UpdateCompanion<UserData> {
   static Insertable<UserData> custom({
     Expression<int>? id,
     Expression<String>? username,
+    Expression<String>? email,
     Expression<String>? name,
     Expression<String>? surname,
     Expression<String>? password,
@@ -338,6 +377,7 @@ class UserCompanion extends UpdateCompanion<UserData> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (username != null) 'username': username,
+      if (email != null) 'email': email,
       if (name != null) 'name': name,
       if (surname != null) 'surname': surname,
       if (password != null) 'password': password,
@@ -348,6 +388,7 @@ class UserCompanion extends UpdateCompanion<UserData> {
   UserCompanion copyWith({
     Value<int>? id,
     Value<String>? username,
+    Value<String?>? email,
     Value<String>? name,
     Value<String>? surname,
     Value<String>? password,
@@ -356,6 +397,7 @@ class UserCompanion extends UpdateCompanion<UserData> {
     return UserCompanion(
       id: id ?? this.id,
       username: username ?? this.username,
+      email: email ?? this.email,
       name: name ?? this.name,
       surname: surname ?? this.surname,
       password: password ?? this.password,
@@ -371,6 +413,9 @@ class UserCompanion extends UpdateCompanion<UserData> {
     }
     if (username.present) {
       map['username'] = Variable<String>(username.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -392,6 +437,7 @@ class UserCompanion extends UpdateCompanion<UserData> {
     return (StringBuffer('UserCompanion(')
           ..write('id: $id, ')
           ..write('username: $username, ')
+          ..write('email: $email, ')
           ..write('name: $name, ')
           ..write('surname: $surname, ')
           ..write('password: $password, ')
@@ -1593,6 +1639,7 @@ typedef $$UserTableCreateCompanionBuilder =
     UserCompanion Function({
       Value<int> id,
       required String username,
+      Value<String?> email,
       required String name,
       required String surname,
       required String password,
@@ -1602,6 +1649,7 @@ typedef $$UserTableUpdateCompanionBuilder =
     UserCompanion Function({
       Value<int> id,
       Value<String> username,
+      Value<String?> email,
       Value<String> name,
       Value<String> surname,
       Value<String> password,
@@ -1683,6 +1731,11 @@ class $$UserTableFilterComposer extends Composer<_$AppDataBase, $UserTable> {
 
   ColumnFilters<String> get username => $composableBuilder(
     column: $table.username,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1800,6 +1853,11 @@ class $$UserTableOrderingComposer extends Composer<_$AppDataBase, $UserTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get name => $composableBuilder(
     column: $table.name,
     builder: (column) => ColumnOrderings(column),
@@ -1835,6 +1893,9 @@ class $$UserTableAnnotationComposer
 
   GeneratedColumn<String> get username =>
       $composableBuilder(column: $table.username, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
@@ -1958,6 +2019,7 @@ class $$UserTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> username = const Value.absent(),
+                Value<String?> email = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String> surname = const Value.absent(),
                 Value<String> password = const Value.absent(),
@@ -1965,6 +2027,7 @@ class $$UserTableTableManager
               }) => UserCompanion(
                 id: id,
                 username: username,
+                email: email,
                 name: name,
                 surname: surname,
                 password: password,
@@ -1974,6 +2037,7 @@ class $$UserTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 required String username,
+                Value<String?> email = const Value.absent(),
                 required String name,
                 required String surname,
                 required String password,
@@ -1981,6 +2045,7 @@ class $$UserTableTableManager
               }) => UserCompanion.insert(
                 id: id,
                 username: username,
+                email: email,
                 name: name,
                 surname: surname,
                 password: password,

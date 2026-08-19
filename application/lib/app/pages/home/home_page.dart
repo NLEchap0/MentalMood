@@ -43,39 +43,47 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AppBackground(
-        child: SafeArea(
-          bottom: false,
-          child: RefreshView(
-            onRefresh: () => _refresh(context),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 150),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 640),
-                  child: EntranceStagger(
-                    spacing: 32,
-                    children: [
-                      _buildHeader(context, user),
-                      _buildStatusCard(context, moodController),
-                      _buildChartCard(context, moodController, chartData),
-                      const Padding(
-                        padding: EdgeInsets.only(bottom: 16),
-                        child: SectionHeader(title: 'Weekly Stats'),
-                      ),
-                      _buildMetrics(context, moodController),
-                      const Padding(
-                        padding: EdgeInsets.only(top: 8),
-                        child: WellnessSection(),
-                      ),
-                    ],
+        child: Column(
+          children: [
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 640),
+                    child: _buildHeader(context, user),
                   ),
                 ),
               ),
             ),
-          ),
+            Expanded(
+              child: RefreshView(
+                onRefresh: () => _refresh(context),
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: ClampingScrollPhysics(),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 150),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 640),
+                      child: EntranceStagger(
+                        spacing: 20,
+                        children: [
+                          _buildStatusCard(context, moodController),
+                          _buildChartCard(context, moodController, chartData),
+                          const SectionHeader(title: 'Weekly Stats'),
+                          _buildMetrics(context, moodController),
+                          const WellnessSection(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -83,7 +91,7 @@ class HomePage extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context, AppUser? user) {
     final now = DateTime.now();
-    final name = user != null ? user.name : '';
+    final name = user != null && user.name.isNotEmpty ? user.name : 'there';
     return Row(
       children: [
         Expanded(
@@ -93,17 +101,17 @@ class HomePage extends StatelessWidget {
               Text(
                 DateFormat('EEEE, d MMMM').format(now).toUpperCase(),
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5,
+                  letterSpacing: 1.2,
                   color: AppColors.textFaint,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
-                'Overview, $name',
+                'Hello, $name',
                 style: const TextStyle(
-                  fontSize: 26,
+                  fontSize: 24,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.5,
                   color: AppColors.textPrimary,

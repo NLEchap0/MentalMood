@@ -14,6 +14,9 @@ class AiController extends ChangeNotifier {
   String? _errorCode;
   String? get errorCode => _errorCode;
 
+  String? _errorDetail;
+  String? get errorDetail => _errorDetail;
+
   String? _lastReply;
   String? get lastReply => _lastReply;
 
@@ -145,11 +148,12 @@ class AiController extends ChangeNotifier {
 
   void _fail(AiFailure e) {
     _state = switch (e.code) {
-      'payment_required' => AiState.paymentRequired,
+      'payment_required' || 'subscription_required' => AiState.paymentRequired,
       'consent_required' => AiState.consentRequired,
       _ => AiState.error,
     };
     _errorCode = e.code;
+    _errorDetail = e.message;
     notifyListeners();
   }
 }

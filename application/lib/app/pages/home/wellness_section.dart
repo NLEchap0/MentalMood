@@ -4,14 +4,12 @@ import 'package:application/app/pages/tools/cbt_diary_page.dart';
 import 'package:application/app/pages/tools/insights_page.dart';
 import 'package:application/app/theme/app_colors.dart';
 import 'package:application/app/widgets/section_header.dart';
-import 'package:application/services/questionnaire_service.dart';
-import 'package:application/state/auth_controller.dart';
 import 'package:application/state/cloud_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 /// "Wellness" section integrated in Home: AI chat, questionnaires,
-/// CBT diary and insights — with plan gating (free → subscription page).
+/// CBT diary and insights — with plan gating (free -> Standard/Pro).
 class WellnessSection extends StatelessWidget {
   const WellnessSection({super.key});
 
@@ -19,14 +17,17 @@ class WellnessSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final cloud = context.watch<CloudController>();
     final session = cloud.session;
-    final isPro = cloud.subscription?.plan == 'pro' ||
-        cloud.session?.plan == 'pro';
+    
+    // STANDARD unlocks: Chat, Insights
+    // PRO unlocks: Everything (Chat, Insights, CBT)
+    final hasStandardAccess = session?.hasStandardAi ?? false;
+    final hasProAccess = session?.hasProAi ?? false;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Padding(
-          padding: EdgeInsets.only(bottom: 16),
+          padding: EdgeInsets.only(bottom: 12),
           child: SectionHeader(title: 'Wellness'),
         ),
         Row(
@@ -39,15 +40,15 @@ class WellnessSection extends StatelessWidget {
                 color: AppColors.accent,
                 title: 'AI Chat',
                 subtitle: '24/7 Assistant',
-                locked: !isPro,
+                lockMessage: !hasStandardAccess ? 'Standard' : null,
                 onTap: () => _openGated(
                   context,
-                  requiresPro: true,
+                  requiredPlan: 'standard',
                   page: const ChatAiPage(),
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: _featureTile(
                 context,
@@ -55,13 +56,13 @@ class WellnessSection extends StatelessWidget {
                 color: AppColors.success,
                 title: 'Questionnaires',
                 subtitle: 'PHQ-9 · GAD-7',
-                locked: false,
+                lockMessage: null,
                 onTap: () => _openQuestionnairePicker(context),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -72,15 +73,15 @@ class WellnessSection extends StatelessWidget {
                 color: AppColors.gold,
                 title: 'CBT Diary',
                 subtitle: 'Restructure thoughts',
-                locked: !isPro,
+                lockMessage: !hasProAccess ? 'Pro' : null,
                 onTap: () => _openGated(
                   context,
-                  requiresPro: true,
+                  requiredPlan: 'pro',
                   page: const CbtDiaryPage(),
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: _featureTile(
                 context,
@@ -88,10 +89,10 @@ class WellnessSection extends StatelessWidget {
                 color: AppColors.textSecondary,
                 title: 'Insights',
                 subtitle: 'Pattern analysis',
-                locked: !isPro,
+                lockMessage: !hasStandardAccess ? 'Standard' : null,
                 onTap: () => _openGated(
                   context,
-                  requiresPro: true,
+                  requiredPlan: 'standard',
                   page: const InsightsPage(),
                 ),
               ),
@@ -110,14 +111,25 @@ class WellnessSection extends StatelessWidget {
               ),
             ),
           )
-        else if (!isPro)
+        else if (!hasStandardAccess)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: TextButton(
               onPressed: () => openSubscriptionPage(context),
               child: const Text(
-                'Upgrade to Pro to unlock AI Chat, CBT, and Insights →',
+                'Upgrade to Standard or Pro to unlock AI features →',
                 style: TextStyle(color: AppColors.accent, fontSize: 12.5),
+              ),
+            ),
+          )
+        else if (!hasProAccess)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: TextButton(
+              onPressed: () => openSubscriptionPage(context),
+              child: const Text(
+                'Upgrade to Pro for advanced CBT tools →',
+                style: TextStyle(color: AppColors.gold, fontSize: 12.5),
               ),
             ),
           ),
@@ -127,13 +139,13 @@ class WellnessSection extends StatelessWidget {
 
   void _openGated(
     BuildContext context, {
-    required bool requiresPro,
+    required String requiredPlan,
     required Widget page,
   }) {
     final cloud = context.read<CloudController>();
-    final isPro = cloud.subscription?.plan == 'pro' ||
-        cloud.session?.plan == 'pro';
-    if (cloud.session == null) {
+    final session = cloud.session;
+    
+    if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Connect your cloud account from the Profile page.'),
@@ -141,10 +153,19 @@ class WellnessSection extends StatelessWidget {
       );
       return;
     }
-    if (requiresPro && !isPro) {
+
+    bool hasAccess = false;
+    if (requiredPlan == 'standard') {
+      hasAccess = session.hasStandardAi;
+    } else if (requiredPlan == 'pro') {
+      hasAccess = session.hasProAi;
+    }
+
+    if (!hasAccess) {
       openSubscriptionPage(context);
       return;
     }
+
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => page),
@@ -164,7 +185,7 @@ class WellnessSection extends StatelessWidget {
     required Color color,
     required String title,
     required String subtitle,
-    required bool locked,
+    required String? lockMessage,
     VoidCallback? onTap,
   }) {
     return Material(
@@ -194,11 +215,23 @@ class WellnessSection extends StatelessWidget {
                     child: Icon(icon, color: color, size: 19),
                   ),
                   const Spacer(),
-                  if (locked)
-                    const Icon(
-                      Icons.lock_outline_rounded,
-                      color: AppColors.textFaint,
-                      size: 16,
+                  if (lockMessage != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.white10,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.lock_outline_rounded, color: AppColors.textFaint, size: 10),
+                          const SizedBox(width: 4),
+                          Text(
+                            lockMessage.toUpperCase(),
+                            style: const TextStyle(color: AppColors.textFaint, fontSize: 8, fontWeight: FontWeight.w800),
+                          ),
+                        ],
+                      ),
                     )
                   else
                     Icon(
@@ -268,33 +301,38 @@ class _QuestionnairesPageState extends State<QuestionnairesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Questionnaires')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _questionnaireCard(
-            context,
-            icon: Icons.healing_outlined,
-            title: 'PHQ-9 — Depression',
-            subtitle: '9 questions about the past week',
-            questions: _phq9,
-            type: 'phq9',
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              _questionnaireCard(
+                context,
+                icon: Icons.healing_outlined,
+                title: 'PHQ-9 — Depression',
+                subtitle: '9 questions about the past week',
+                questions: _phq9,
+                type: 'phq9',
+              ),
+              const SizedBox(height: 14),
+              _questionnaireCard(
+                context,
+                icon: Icons.psychology_outlined,
+                title: 'GAD-7 — Anxiety',
+                subtitle: '7 questions about the past week',
+                questions: _gad7,
+                type: 'gad7',
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'These tests are informational tools and do not replace '
+                'a healthcare professional.',
+                style: TextStyle(color: AppColors.textFaint, fontSize: 12),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
-          _questionnaireCard(
-            context,
-            icon: Icons.psychology_outlined,
-            title: 'GAD-7 — Anxiety',
-            subtitle: '7 questions about the past week',
-            questions: _gad7,
-            type: 'gad7',
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'These tests are informational tools and do not replace '
-            'a healthcare professional.',
-            style: TextStyle(color: AppColors.textFaint, fontSize: 12),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -399,30 +437,5 @@ class _QuestionnairesPageState extends State<QuestionnairesPage> {
       if (answer == null) return;
       answers.add(answer);
     }
-
-    final result = await QuestionnaireService().save(
-      userId: context.read<AuthController>().currentUser?.id ?? 0,
-      type: type,
-      answers: answers,
-    );
-    if (!mounted) return;
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Result'),
-        content: Text(
-          'Score: ${result.totalScore}\n'
-          'Severity: ${result.severity}\n\n'
-          'This tool is informative and does not replace a '
-          'healthcare professional.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 }

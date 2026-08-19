@@ -1,6 +1,8 @@
 import 'package:application/app/theme/app_colors.dart';
 import 'package:application/app/widgets/app_background.dart';
 import 'package:application/app/widgets/app_button.dart';
+import 'package:application/app/widgets/app_logo.dart';
+import 'package:application/app/widgets/app_toast.dart';
 import 'package:application/app/widgets/entrance_stagger.dart';
 import 'package:application/app/widgets/refresh_view.dart';
 import 'package:application/state/cloud_controller.dart';
@@ -54,7 +56,9 @@ class _LoginPageState extends State<LoginPage> {
         ? null
         : controller.errorCode == 'network_error'
             ? 'Server unreachable. Check your connection.'
-            : 'Invalid username or password (${controller.errorCode}).';
+            : controller.errorCode == 'invalid_credentials' || controller.errorCode == 'auth_error'
+                ? 'Invalid username or password.'
+                : 'Authentication failed. Please try again.';
 
     return Scaffold(
       body: AppBackground(
@@ -63,7 +67,7 @@ class _LoginPageState extends State<LoginPage> {
             onRefresh: _refresh,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
+                parent: ClampingScrollPhysics(),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               child: Center(
@@ -75,31 +79,8 @@ class _LoginPageState extends State<LoginPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       spacing: 24,
                       children: [
-                        const SizedBox(height: 48),
-                        Center(
-                          child: Container(
-                            width: 88,
-                            height: 88,
-                            decoration: BoxDecoration(
-                              color: AppColors.accent.withValues(alpha: 0.12),
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.accent.withValues(
-                                    alpha: 0.25,
-                                  ),
-                                  blurRadius: 40,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.spa_rounded,
-                              color: AppColors.accent,
-                              size: 40,
-                            ),
-                          ),
-                        ),
+                        const SizedBox(height: 32),
+                        const AppLogo(size: 110),
                         Column(
                           children: [
                             const Text(
@@ -113,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Text(
+                            const Text(
                               'A quiet space for your daily check-ins',
                               textAlign: TextAlign.center,
                               style: TextStyle(
@@ -249,13 +230,10 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
     if (sent == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'If the account exists, you will receive an email with the link '
-            'to reset your password.',
-          ),
-        ),
+      AppToast.show(
+        context,
+        'Instructions sent to your email.',
+        type: AppToastType.success,
       );
     }
   }

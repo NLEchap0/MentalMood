@@ -10,6 +10,7 @@ part 'database.g.dart';
 class User extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get username => text().unique()();
+  TextColumn get email => text().nullable()();
   TextColumn get name => text()();
   TextColumn get surname => text()();
   TextColumn get password => text()();
@@ -55,7 +56,7 @@ class AppDataBase extends _$AppDataBase {
   AppDataBase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   // User operations
   Future<int> createUser(UserCompanion entity) => into(user).insert(entity);
@@ -149,6 +150,9 @@ class AppDataBase extends _$AppDataBase {
             "WHEN '🌤' THEN 'weather' "
             'ELSE emoji END',
           );
+        }
+        if (from < 8) {
+          await m.addColumn(user, user.email);
         }
       },
       beforeOpen: (details) async {

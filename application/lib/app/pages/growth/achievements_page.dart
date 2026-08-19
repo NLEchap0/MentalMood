@@ -32,17 +32,18 @@ class AchievementsPage extends StatelessWidget {
       backgroundColor: AppColors.backgroundBase,
       appBar: AppBar(title: const Text('Achievements')),
       body: AppBackground(
-        child: RefreshView(
-          onRefresh: () => _refresh(context),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 80),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 640),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: RefreshView(
+              onRefresh: () => _refresh(context),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: ClampingScrollPhysics(),
+                ),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 80),
                 child: EntranceStagger(
+                  spacing: 24,
                   children: [
                     _buildCategory(context, 'Journaling Milestones', const [
                       ('streak_3', 'Rising Star', 'bolt', '3 day streak'),
@@ -50,6 +51,7 @@ class AchievementsPage extends StatelessWidget {
                       ('streak_30', 'Commitment', 'diamond', '30 day streak'),
                       ('total_50', 'Mood Master', 'school', '50 check-ins'),
                     ], unlockedCodes),
+                    const SizedBox(height: 24),
                     _buildCategory(context, 'Special Moments', const [
                       (
                         'special_early',

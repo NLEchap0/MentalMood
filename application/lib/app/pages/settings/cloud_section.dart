@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:application/app/pages/settings/subscription_page.dart';
 import 'package:application/app/theme/app_colors.dart';
 import 'package:application/app/widgets/app_button.dart';
@@ -42,14 +40,6 @@ class _CloudSectionState extends State<CloudSection> {
   List<Widget> _buildNotConnected(BuildContext context, CloudController cloud) {
     return [
       _Row(
-        title: 'Cloud & AI',
-        subtitle: 'Encrypted backup, sync and AI features',
-        icon: Icons.cloud_outlined,
-        color: AppColors.accent,
-        onTap: () => _showAccountSheet(context, cloud),
-      ),
-      const Divider(indent: 64),
-      _Row(
         title: 'Connect your account',
         subtitle: 'Login or register on the cloud',
         icon: Icons.login_rounded,
@@ -85,14 +75,6 @@ class _CloudSectionState extends State<CloudSection> {
     final sub = cloud.subscription;
 
     return [
-      _Row(
-        title: 'Account',
-        subtitle: '@${session.username} · ${session.plan} plan',
-        icon: Icons.person_outline_rounded,
-        color: AppColors.success,
-        onTap: () => _showAccountSheet(context, cloud),
-      ),
-      const Divider(indent: 64),
       _Row(
         title: 'Subscription',
         subtitle: sub == null
@@ -144,18 +126,14 @@ class _CloudSectionState extends State<CloudSection> {
       const Divider(indent: 64),
       _Row(
         title: 'Sync now',
-        subtitle: cloud.lastSyncResult ?? 'Push and pull encrypted data',
+        subtitle: !session.canSync
+            ? 'Subscription required for cloud sync'
+            : (cloud.lastSyncResult ?? 'Push and pull encrypted data'),
         icon: Icons.sync_rounded,
-        color: AppColors.accent,
-        onTap: _syncing ? null : () => _runSync(context, cloud),
-      ),
-      const Divider(indent: 64),
-      _Row(
-        title: 'Export data (GDPR)',
-        subtitle: 'Download a JSON copy of your data',
-        icon: Icons.download_rounded,
-        color: AppColors.textSecondary,
-        onTap: () => _export(context, cloud),
+        color: !session.canSync ? AppColors.textFaint : AppColors.accent,
+        onTap: _syncing || !session.canSync
+            ? null
+            : () => _runSync(context, cloud),
       ),
       if (cloud.errorCode != null)
         Padding(
@@ -178,8 +156,14 @@ class _CloudSectionState extends State<CloudSection> {
       if (mounted) setState(() => _syncing = false);
       return;
     }
-    final sync = this.context.read<SyncService>();
-    final userId = this.context.read<AuthController>().currentUser?.id ?? 0;
+    
+    final sync = context.read<SyncService>();
+    final userId = context.read<AuthController>().currentUser?.id ?? 0;
+    
+    // For manual sync from UI, we reset the 'since' date to force 
+    // a full re-upload of all records to the cloud.
+    await sync.resetForUser(userId);
+
     final ok = await sync.sync(
       userId: userId,
       credentials: SyncCredentials(
@@ -187,45 +171,13 @@ class _CloudSectionState extends State<CloudSection> {
         syncKey: session.syncKey,
         dek: dek,
       ),
-      // Sync concatenates /sync: we pass the base URL without index.php
-      // and the client handles it (HttpSyncClient uses apiEndpoint).
       baseUrl: apiBaseUrl().replaceAll(RegExp(r'/+$'), ''),
     );
+    if (!mounted) return;
     cloud.setSyncResult(ok
         ? 'Synced ${sync.lastSyncAt?.toIso8601String() ?? ''}'
         : 'Sync failed: ${sync.errorCode ?? 'unknown'}');
     if (mounted) setState(() => _syncing = false);
-  }
-
-  Future<void> _export(BuildContext context, CloudController cloud) async {
-    final data = await cloud.exportCloudData();
-    if (!mounted) return;
-    if (data == null) {
-      _snack(this.context, 'Export failed: ${cloud.errorCode}');
-      return;
-    }
-    final text = const JsonEncoder.withIndent('  ').convert(data);
-    await showDialog<void>(
-      context: this.context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Your data (JSON)'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: SelectableText(
-              text.length > 4000 ? '${text.substring(0, 4000)}…' : text,
-              style: const TextStyle(fontSize: 11),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _showAccountSheet(
@@ -428,13 +380,6 @@ class _CloudSectionState extends State<CloudSection> {
         );
       },
     );
-  }
-
-  void _snack(BuildContext context, String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

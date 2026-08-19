@@ -18,6 +18,7 @@ class DriftUserRepository implements UserRepository {
   @override
   Future<AppUser> createUser({
     required String username,
+    String? email,
     required String name,
     required String surname,
     required String password,
@@ -26,6 +27,7 @@ class DriftUserRepository implements UserRepository {
     final id = await _db.createUser(
       userToCompanion(
         username: username,
+        email: email,
         name: name,
         surname: surname,
         password: password,
@@ -35,6 +37,7 @@ class DriftUserRepository implements UserRepository {
     return AppUser(
       id: id,
       username: username,
+      email: email,
       name: name,
       surname: surname,
       birthDate: birthDate,
@@ -48,6 +51,7 @@ class DriftUserRepository implements UserRepository {
     required String name,
     required String surname,
     required DateTime birthDate,
+    String? email,
   }) {
     return _db.updateUser(
       id,
@@ -55,6 +59,7 @@ class DriftUserRepository implements UserRepository {
         name: Value(name),
         surname: Value(surname),
         birthDate: Value(birthDate),
+        email: Value(email),
       ),
     );
   }

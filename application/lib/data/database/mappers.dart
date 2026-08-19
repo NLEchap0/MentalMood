@@ -49,6 +49,7 @@ Badge badgeToDomain(BadgeData row) => Badge(
 AppUser userToDomain(UserData row) => AppUser(
   id: row.id,
   username: row.username,
+  email: row.email,
   name: row.name,
   surname: row.surname,
   birthDate: row.birthDate,
@@ -57,12 +58,14 @@ AppUser userToDomain(UserData row) => AppUser(
 
 UserCompanion userToCompanion({
   required String username,
+  String? email,
   required String name,
   required String surname,
   required String password,
   required DateTime birthDate,
 }) => UserCompanion.insert(
   username: username,
+  email: Value(email),
   name: name,
   surname: surname,
   password: password,

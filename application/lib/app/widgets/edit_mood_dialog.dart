@@ -4,10 +4,14 @@ import 'package:application/app/theme/app_theme.dart';
 import 'package:application/app/theme/animations.dart';
 import 'package:application/app/widgets/app_background.dart';
 import 'package:application/app/widgets/app_button.dart';
+import 'package:application/app/widgets/app_toast.dart';
 import 'package:application/app/widgets/glass_card.dart';
 import 'package:application/domain/models.dart';
 import 'package:application/domain/mood_labels.dart';
+import 'package:application/services/auth_api_client.dart';
+import 'package:application/services/sync_service.dart';
 import 'package:application/state/auth_controller.dart';
+import 'package:application/state/cloud_controller.dart';
 import 'package:application/state/mood_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -63,15 +67,41 @@ class _EditMoodDialogState extends State<EditMoodDialog> {
     );
     if (!mounted) return;
     if (success) {
-      ScaffoldMessenger.of(
+      AppToast.show(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Entry updated.')));
+        'Entry updated.',
+        type: AppToastType.success,
+      );
+      // Trigger background sync
+      _triggerSync();
       Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not update. Please try again.')),
+      AppToast.show(
+        context,
+        'Could not update. Please try again.',
+        type: AppToastType.error,
       );
     }
+  }
+
+  Future<void> _triggerSync() async {
+    final cloud = context.read<CloudController>();
+    final session = cloud.session;
+    final dek = await cloud.cloudDek();
+    if (session == null || dek == null || !session.canSync) return;
+    final user = context.read<AuthController>().currentUser;
+    if (user == null) return;
+
+    // Fire and forget sync in background
+    context.read<SyncService>().sync(
+          userId: user.id,
+          credentials: SyncCredentials(
+            accessToken: session.accessToken,
+            syncKey: session.syncKey,
+            dek: dek,
+          ),
+          baseUrl: apiBaseUrl().replaceAll(RegExp(r'/+$'), ''),
+        );
   }
 
   @override

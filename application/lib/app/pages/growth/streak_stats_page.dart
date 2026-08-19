@@ -39,13 +39,14 @@ class StreakStatsPage extends StatelessWidget {
           onRefresh: () => _refresh(context),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
+              parent: ClampingScrollPhysics(),
             ),
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 80),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 80),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 640),
                 child: EntranceStagger(
+                  spacing: 20,
                   children: [
                     GlassCard(
                       size: GlassCardSize.lg,

@@ -26,19 +26,24 @@ class MainNavigationContainer extends StatefulWidget {
       _MainNavigationContainerState();
 }
 
-class _MainNavigationContainerState extends State<MainNavigationContainer> {
+class _MainNavigationContainerState extends State<MainNavigationContainer>
+    with WidgetsBindingObserver {
   int _selectedIndex = 0;
   Timer? _syncTimer;
+  final _journalKey = GlobalKey<MoodHistoryPageState>();
 
-  static const List<Widget> _pages = [
-    HomePage(),
-    MoodHistoryPage(),
-    SettingsPage(),
-  ];
+  late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
+    _pages = [
+      const HomePage(),
+      MoodHistoryPage(key: _journalKey),
+      const SettingsPage(),
+    ];
+    WidgetsBinding.instance.addObserver(this);
+    
     // Load the user's mood history (and tags/badges) once on app start,
     // after the first frame so providers are ready.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -46,7 +51,9 @@ class _MainNavigationContainerState extends State<MainNavigationContainer> {
       if (user != null) {
         context.read<MoodController>().fetchMoodHistory(user.id);
       }
+      _autoSync();
     });
+    
     // Periodic automatic sync (every 5 min) when there is a cloud session
     // and the DEK is available. Silent: does not notify the user.
     _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) => _autoSync());
@@ -54,18 +61,31 @@ class _MainNavigationContainerState extends State<MainNavigationContainer> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _syncTimer?.cancel();
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Sync when the app comes back to foreground
+    if (state == AppLifecycleState.resumed) {
+      _autoSync();
+    }
+  }
+
   Future<void> _autoSync() async {
+    if (!mounted) return;
     final cloud = context.read<CloudController>();
     final session = cloud.session;
     final dek = await cloud.cloudDek();
-    if (session == null || dek == null) return;
+    if (session == null || dek == null || !session.canSync) return;
+    if (!mounted) return;
     final auth = context.read<AuthController>();
     final user = auth.currentUser;
     if (user == null) return;
+
+    if (!mounted) return;
     await context.read<SyncService>().sync(
       userId: user.id,
       credentials: SyncCredentials(
@@ -109,8 +129,12 @@ class _MainNavigationContainerState extends State<MainNavigationContainer> {
           backgroundColor: AppColors.backgroundBase,
           indicatorColor: AppColors.accent.withValues(alpha: 0.14),
           selectedIndex: _selectedIndex,
-          onDestinationSelected: (index) =>
-              setState(() => _selectedIndex = index),
+          onDestinationSelected: (index) {
+            if (index == 1) {
+              _journalKey.currentState?.resetFilters();
+            }
+            setState(() => _selectedIndex = index);
+          },
           destinations: const [
             NavigationDestination(
               icon: Icon(Icons.home_outlined, color: Colors.white54, size: 22),

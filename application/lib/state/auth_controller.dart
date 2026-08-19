@@ -44,6 +44,7 @@ class AuthController extends ChangeNotifier {
     required String name,
     required String surname,
     required DateTime birthDate,
+    String? email,
   }) async {
     final user = _currentUser;
     if (user == null) return false;
@@ -53,6 +54,7 @@ class AuthController extends ChangeNotifier {
       name: name.trim(),
       surname: surname.trim(),
       birthDate: birthDate,
+      email: email,
     );
     if (success) {
       _currentUser = await userRepository.getUserByUsername(user.username);

@@ -62,14 +62,13 @@ class _ChatAiPageState extends State<ChatAiPage> {
       if (ok && controller.lastReply != null) {
         _messages.add((role: 'ai', text: controller.lastReply!));
       } else {
-        _messages.add((
-          role: 'ai',
-          text: controller.state == AiState.paymentRequired
-              ? "This feature requires a Pro subscription."
-              : controller.state == AiState.consentRequired
-                  ? 'To use the chat, you must enable AI consent.'
-                  : 'An error occurred. Please try again.',
-        ));
+        final detail = controller.errorDetail ?? '';
+        final errorMsg = controller.state == AiState.paymentRequired
+            ? "This feature requires a Pro subscription."
+            : controller.state == AiState.consentRequired
+                ? 'To use the chat, you must enable AI consent.'
+                : 'An error occurred (${controller.errorCode ?? 'unknown'})${detail.isNotEmpty ? ': $detail' : ''}. Please try again.';
+        _messages.add((role: 'ai', text: errorMsg));
       }
     });
     _scrollToBottom();
@@ -91,91 +90,101 @@ class _ChatAiPageState extends State<ChatAiPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Chat AI')),
-      body: Column(
-        children: [
-          Expanded(
-            child: _messages.isEmpty
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Text(
-                        'Talk to your wellness assistant.\n'
-                        'Ask for advice, vent or explore your thoughts.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.textFaint),
-                      ),
-                    ),
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _messages.length,
-                    itemBuilder: (_, i) {
-                      final m = _messages[i];
-                      final isUser = m.role == 'user';
-                      return Align(
-                        alignment: isUser
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          constraints: BoxConstraints(
-                            maxWidth: MediaQuery.of(context).size.width * 0.78,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isUser
-                                ? AppColors.accent.withValues(alpha: 0.2)
-                                : AppColors.surface,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: Column(
+            children: [
+              Expanded(
+                child: _messages.isEmpty
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(32),
                           child: Text(
-                            m.text,
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              height: 1.35,
-                            ),
+                            'Talk to your wellness assistant.\n'
+                            'Ask for advice, vent or explore your thoughts.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: AppColors.textFaint),
                           ),
                         ),
-                      );
-                    },
-                  ),
-          ),
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      minLines: 1,
-                      maxLines: 4,
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _send(),
-                      decoration: const InputDecoration(
-                        hintText: 'Type a message…',
+                      )
+                    : ListView.builder(
+                        controller: _scrollController,
+                        physics: const ClampingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        itemCount: _messages.length,
+                        itemBuilder: (_, i) {
+                          final m = _messages[i];
+                          final isUser = m.role == 'user';
+                          return Align(
+                            alignment: isUser
+                                ? Alignment.centerRight
+                                : Alignment.centerLeft,
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              constraints: BoxConstraints(
+                                maxWidth: MediaQuery.of(context).size.width * (MediaQuery.of(context).size.width > 800 ? 0.6 : 0.8),
+                              ),
+                              decoration: BoxDecoration(
+                                color: isUser
+                                    ? AppColors.accent.withValues(alpha: 0.2)
+                                    : AppColors.surface,
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: Text(
+                                m.text,
+                                style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  height: 1.4,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.filled(
-                    onPressed: _send,
-                    icon: const Icon(Icons.send_rounded),
-                    color: AppColors.textPrimary,
-                    style: IconButton.styleFrom(
-                      backgroundColor: AppColors.accent,
-                    ),
-                  ),
-                ],
               ),
-            ),
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _messageController,
+                          autofocus: true,
+                          minLines: 1,
+                          maxLines: 4,
+                          textInputAction: TextInputAction.send,
+                          onSubmitted: (_) => _send(),
+                          style: const TextStyle(color: AppColors.textPrimary),
+                          decoration: const InputDecoration(
+                            hintText: 'Type a message…',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      IconButton.filled(
+                        onPressed: _send,
+                        icon: const Icon(Icons.send_rounded),
+                        color: Colors.white,
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppColors.accent,
+                          padding: const EdgeInsets.all(12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

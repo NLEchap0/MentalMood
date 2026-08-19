@@ -21,6 +21,7 @@ class FakeUserRepository implements UserRepository {
   @override
   Future<AppUser> createUser({
     required String username,
+    String? email,
     required String name,
     required String surname,
     required String password,
@@ -34,6 +35,7 @@ class FakeUserRepository implements UserRepository {
     required String name,
     required String surname,
     required DateTime birthDate,
+    String? email,
   }) async =>
       true;
 

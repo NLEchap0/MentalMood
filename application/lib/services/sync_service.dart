@@ -57,6 +57,7 @@ class SyncService extends ChangeNotifier {
     required SyncCredentials credentials,
     String baseUrl = 'http://localhost:8090',
   }) async {
+    if (_state == SyncState.syncing) return false;
     _state = SyncState.syncing;
     _errorCode = null;
     notifyListeners();
@@ -150,12 +151,52 @@ class SyncService extends ChangeNotifier {
       _errorCode = e.code;
       notifyListeners();
       return false;
+    } catch (e) {
+      _state = SyncState.error;
+      _errorCode = 'unexpected_error';
+      debugPrint('SyncService: unexpected error during sync: $e');
+      notifyListeners();
+      return false;
     }
   }
 
   Future<void> resetForUser(int userId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('sync_since_$userId');
+  }
+
+  Future<bool> deleteRecord({
+    required int userId,
+    required String recordKey,
+    required SyncCredentials credentials,
+    String baseUrl = 'http://localhost:8090',
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        'ts': _now().millisecondsSinceEpoch ~/ 1000,
+        'nonce': _hexBytes(16),
+        'since': '1970-01-01T00:00:00Z',
+        'records': [
+          {
+            'record_key': recordKey,
+            'entity': recordKey.split(':')[0],
+            'updated_at': _now().toUtc().toIso8601String(),
+            'deleted': true,
+          }
+        ],
+      };
+
+      await _httpClient.postSync(
+        baseUrl: baseUrl,
+        accessToken: credentials.accessToken,
+        syncKey: credentials.syncKey,
+        body: body,
+      );
+      return true;
+    } catch (e) {
+      debugPrint('Sync: immediate delete failed for $recordKey: $e');
+      return false;
+    }
   }
 
   Future<void> _applyPulls(

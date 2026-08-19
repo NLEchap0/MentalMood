@@ -39,46 +39,79 @@ class _InsightsPageState extends State<InsightsPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Insights')),
-      body: insights.isEmpty
-          ? const Center(
-              child: Padding(
-                padding: EdgeInsets.all(32),
-                child: Text(
-                  'No insights available yet. Insights are '
-                  'periodically generated from your data.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textFaint),
-                ),
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: insights.length,
-              itemBuilder: (_, i) {
-                final insight = insights[i];
-                return Card(
-                  color: AppColors.surface,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    leading: const Icon(Icons.insights, color: AppColors.accent),
-                    title: Text(
-                      insight.kind == 'weekly' ? 'Weekly' : 'Monthly',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text(
-                        insight.content,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          height: 1.4,
-                        ),
-                      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: insights.isEmpty
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Text(
+                      'No insights available yet. Insights are '
+                      'periodically generated from your data.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppColors.textFaint),
                     ),
                   ),
-                );
-              },
-            ),
+                )
+              : ListView.builder(
+                  physics: const ClampingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+                  itemCount: insights.length,
+                  itemBuilder: (_, i) {
+                    final insight = insights[i];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.accent.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.insights_rounded, color: AppColors.accent, size: 20),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  insight.kind == 'weekly' ? 'WEEKLY ANALYSIS' : 'MONTHLY ANALYSIS',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 10,
+                                    letterSpacing: 1.2,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  insight.content,
+                                  style: const TextStyle(
+                                    color: AppColors.textPrimary,
+                                    height: 1.5,
+                                    fontSize: 14.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ),
     );
   }
 }

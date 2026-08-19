@@ -8,12 +8,15 @@ class SyncRecord {
   });
 
   factory SyncRecord.fromJson(Map<String, dynamic> json) {
+    final deletedVal = json['deleted'];
+    final isDeleted = deletedVal is bool ? deletedVal : (deletedVal as num? ?? 0) != 0;
+    
     return SyncRecord(
       recordKey: json['record_key'] as String,
       entity: json['entity'] as String,
       payload: json['payload'] as String?,
       updatedAt: DateTime.parse(json['updated_at'] as String).toUtc(),
-      deleted: (json['deleted'] as num) != 0,
+      deleted: isDeleted,
     );
   }
 

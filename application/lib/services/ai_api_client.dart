@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:application/services/auth_api_client.dart';
 import 'package:http/http.dart' as http;
 
 class AiFailure implements Exception {
@@ -86,7 +86,6 @@ class HttpAiApiClient implements AiApiClient {
     required String message,
   }) async {
     final data = await _post(
-      baseUrl: baseUrl,
       accessToken: accessToken,
       path: '/ai/chat',
       body: {'message': message},
@@ -101,7 +100,6 @@ class HttpAiApiClient implements AiApiClient {
     required String context,
   }) async {
     final data = await _post(
-      baseUrl: baseUrl,
       accessToken: accessToken,
       path: '/ai/advice',
       body: {'context': context},
@@ -117,7 +115,6 @@ class HttpAiApiClient implements AiApiClient {
     required String situation,
   }) async {
     final data = await _post(
-      baseUrl: baseUrl,
       accessToken: accessToken,
       path: '/ai/cbt',
       body: {'thought': thought, 'situation': situation},
@@ -132,7 +129,6 @@ class HttpAiApiClient implements AiApiClient {
     required bool consent,
   }) async {
     final data = await _post(
-      baseUrl: baseUrl,
       accessToken: accessToken,
       path: '/consent',
       body: {'consent': consent},
@@ -145,13 +141,15 @@ class HttpAiApiClient implements AiApiClient {
     required String baseUrl,
     required String accessToken,
   }) async {
-    final uri = Uri.parse('$baseUrl/ai-data');
+    final uri = Uri.parse(apiEndpoint('/ai-data'));
     try {
-      final response = await _client.delete(
+      // Using POST override as some hosting providers block DELETE
+      final response = await _client.post(
         uri,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $accessToken',
+          'X-HTTP-Method-Override': 'DELETE',
         },
       );
       final decoded = _decode(response);
@@ -168,7 +166,7 @@ class HttpAiApiClient implements AiApiClient {
     required String baseUrl,
     required String accessToken,
   }) async {
-    final uri = Uri.parse('$baseUrl/ai/insights');
+    final uri = Uri.parse(apiEndpoint('/ai/insights'));
     try {
       final response = await _client.get(
         uri,
@@ -187,12 +185,11 @@ class HttpAiApiClient implements AiApiClient {
   }
 
   Future<Map<String, dynamic>> _post({
-    required String baseUrl,
     required String accessToken,
     required String path,
     required Map<String, dynamic> body,
   }) async {
-    final uri = Uri.parse('$baseUrl$path');
+    final uri = Uri.parse(apiEndpoint(path));
     try {
       final response = await _client.post(
         uri,

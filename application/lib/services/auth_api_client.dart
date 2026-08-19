@@ -14,10 +14,14 @@ String apiBaseUrl() =>
 String apiEndpoint(String path) {
   final base = apiBaseUrl().replaceAll(RegExp(r'/+$'), '');
   final normalized = path.startsWith('/') ? path : '/$path';
-  if (base.contains('webdevinnovations.ch')) {
-    return '$base/index.php$normalized';
+  
+  if (base.contains('localhost') || base.contains('10.0.2.2')) {
+    return '$base$normalized';
   }
-  return '$base$normalized';
+  
+  // High-compatibility mode for IONOS/Shared Hosting:
+  // Use query parameter for routing to bypass PATH_INFO limitations.
+  return '$base/index.php?route=$normalized';
 }
 
 class CloudApiFailure implements Exception {
@@ -46,6 +50,15 @@ class AuthSession {
     required this.status,
     this.trialEndsAt,
     this.currentPeriodEnd,
+    this.name,
+    this.surname,
+    this.birthDate,
+    this.email,
+    this.nameCipher,
+    this.surnameCipher,
+    this.birthDateCipher,
+    this.kekSalt,
+    this.wrappedDek,
   });
 
   final int id;
@@ -58,8 +71,69 @@ class AuthSession {
   final DateTime? trialEndsAt;
   final DateTime? currentPeriodEnd;
 
+  // Profile data
+  final String? name;
+  final String? surname;
+  final DateTime? birthDate;
+  final String? email;
+
+  // E2EE data
+  final String? nameCipher;
+  final String? surnameCipher;
+  final String? birthDateCipher;
+  final String? kekSalt;
+  final String? wrappedDek;
+
   bool get isPro => plan == 'pro' && (status == 'active' || status == 'trialing');
   bool get canSync => plan != 'free' || (trialEndsAt?.isAfter(DateTime.now()) ?? false);
+
+  // Gating helpers for AI features
+  bool get hasStandardAi => 
+      plan == 'standard' || 
+      plan == 'pro' || 
+      (trialEndsAt?.isAfter(DateTime.now()) ?? false);
+  
+  bool get hasProAi => 
+      plan == 'pro' || 
+      (trialEndsAt?.isAfter(DateTime.now()) ?? false);
+
+  AuthSession copyWith({
+    String? accessToken,
+    String? refreshToken,
+    String? syncKey,
+    String? plan,
+    String? status,
+    String? name,
+    String? surname,
+    DateTime? birthDate,
+    String? email,
+    String? nameCipher,
+    String? surnameCipher,
+    String? birthDateCipher,
+    String? kekSalt,
+    String? wrappedDek,
+  }) {
+    return AuthSession(
+      id: id,
+      accessToken: accessToken ?? this.accessToken,
+      refreshToken: refreshToken ?? this.refreshToken,
+      syncKey: syncKey ?? this.syncKey,
+      username: username,
+      plan: plan ?? this.plan,
+      status: status ?? this.status,
+      trialEndsAt: trialEndsAt,
+      currentPeriodEnd: currentPeriodEnd,
+      name: name ?? this.name,
+      surname: surname ?? this.surname,
+      birthDate: birthDate ?? this.birthDate,
+      email: email ?? this.email,
+      nameCipher: nameCipher ?? this.nameCipher,
+      surnameCipher: surnameCipher ?? this.surnameCipher,
+      birthDateCipher: birthDateCipher ?? this.birthDateCipher,
+      kekSalt: kekSalt ?? this.kekSalt,
+      wrappedDek: wrappedDek ?? this.wrappedDek,
+    );
+  }
 }
 
 class SubscriptionInfo {
@@ -263,9 +337,83 @@ class AuthApiClient {
 
   Future<void> deleteAccount(String accessToken) async {
     return _guard(() async {
-      final response = await _client.delete(
-        Uri.parse(apiEndpoint('/account')),
-        headers: {'Authorization': 'Bearer $accessToken'},
+      final url = apiEndpoint('/account');
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'X-HTTP-Method-Override': 'DELETE',
+        },
+      );
+      if (response.statusCode != 200) {
+        throw _failure(response);
+      }
+    });
+  }
+
+  Future<void> updateProfile({
+    required String accessToken,
+    required String nameCipher,
+    required String surnameCipher,
+    required String birthDateCipher,
+  }) async {
+    return _guard(() async {
+      final response = await _client.post(
+        Uri.parse(apiEndpoint('/account/update')),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: jsonEncode({
+          'name_cipher': nameCipher,
+          'surname_cipher': surnameCipher,
+          'birth_date_cipher': birthDateCipher,
+        }),
+      );
+      if (response.statusCode != 200) {
+        throw _failure(response);
+      }
+    });
+  }
+
+  Future<void> wipeData(String accessToken, {DateTime? before}) async {
+    return _guard(() async {
+      final response = await _client.post(
+        Uri.parse(apiEndpoint('/account/wipe')),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: jsonEncode({
+          if (before != null) 'before': before.toIso8601String(),
+        }),
+      );
+      if (response.statusCode != 200) {
+        throw _failure(response);
+      }
+    });
+  }
+
+  Future<void> changePassword({
+    required String accessToken,
+    required String oldPassword,
+    required String newPassword,
+    required String newKekSalt,
+    required String newWrappedDek,
+  }) async {
+    return _guard(() async {
+      final response = await _client.post(
+        Uri.parse(apiEndpoint('/account/change-password')),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: jsonEncode({
+          'old_password': oldPassword,
+          'new_password': newPassword,
+          'new_kek_salt': newKekSalt,
+          'new_wrapped_dek': newWrappedDek,
+        }),
       );
       if (response.statusCode != 200) {
         throw _failure(response);
@@ -292,7 +440,6 @@ class AuthApiClient {
     String message = '';
     try {
       final body = jsonDecode(response.body);
-      print('DEBUG API FAILURE: Status ${response.statusCode}, Body: $body');
       if (body is Map) {
         if (body.containsKey('error')) {
           final error = body['error'];
@@ -307,8 +454,7 @@ class AuthApiClient {
           message = body['message']?.toString() ?? '';
         }
       }
-    } catch (e) {
-      print('DEBUG API FAILURE PARSE ERROR: $e, Raw Body: ${response.body}');
+    } catch (_) {
       code = response.statusCode >= 500 ? 'server_error' : 'unknown';
     }
     return CloudApiFailure(
@@ -319,7 +465,7 @@ class AuthApiClient {
   }
 
   DateTime? _parseDate(String? v) {
-    if (v == null) return null;
+    if (v == null || v == '') return null;
     return DateTime.tryParse(v);
   }
 
@@ -334,6 +480,15 @@ class AuthApiClient {
       plan: user['plan'] as String? ?? 'free',
       status: user['subscription_status'] as String? ?? 'none',
       trialEndsAt: _parseDate(user['trial_ends_at'] as String?),
+      name: user['name'] as String?,
+      surname: user['surname'] as String?,
+      birthDate: _parseDate(user['birth_date'] as String?),
+      nameCipher: user['name_cipher'] as String?,
+      surnameCipher: user['surname_cipher'] as String?,
+      birthDateCipher: user['birth_date_cipher'] as String?,
+      email: user['email'] as String?,
+      kekSalt: user['kek_salt'] as String?,
+      wrappedDek: user['wrapped_dek'] as String?,
     );
   }
 }

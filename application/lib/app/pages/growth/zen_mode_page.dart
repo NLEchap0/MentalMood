@@ -133,149 +133,152 @@ class _ZenModePageState extends State<ZenModePage>
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Row(
+                  physics: const ClampingScrollPhysics(),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                        maxWidth: 640,
+                      ),
+                      child: IntrinsicHeight(
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.close_rounded,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    onPressed: () => Navigator.pop(context),
+                                  ),
+                                  const Spacer(),
+                                  const Text(
+                                    'PANIC BUTTON',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 4,
+                                      color: AppColors.textFaint,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  const SizedBox(width: 48),
+                                ],
+                              ),
+                            ),
+                            const Spacer(),
+                            Stack(
+                              alignment: Alignment.center,
                               children: [
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.close_rounded,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  onPressed: () => Navigator.pop(context),
-                                ),
-                                const Spacer(),
-                                Text(
-                                  'PANIC BUTTON',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 4,
-                                    color: AppColors.textFaint,
+                                SizedBox(
+                                  width: 320,
+                                  height: 320,
+                                  child: CircularProgressIndicator(
+                                    value: _progress,
+                                    strokeWidth: 6,
+                                    color: color.withValues(alpha: 0.35),
+                                    backgroundColor: Colors.transparent,
                                   ),
                                 ),
-                                const Spacer(),
-                                const SizedBox(width: 48),
+                                AnimatedBuilder(
+                                  animation: _sizeAnimation,
+                                  builder: (context, child) => Container(
+                                    width: 260 * _sizeAnimation.value,
+                                    height: 260 * _sizeAnimation.value,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: color.withValues(alpha: 0.18),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: color.withValues(alpha: 0.22),
+                                          blurRadius: 80,
+                                          spreadRadius: 5,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        _phase == BreathPhase.ready
+                                            ? 'READY'
+                                            : _phase.name.toUpperCase(),
+                                        style: TextStyle(
+                                          color: color,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 4,
+                                          fontSize: 20,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
-                          ),
-                          const Spacer(),
-                          Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              SizedBox(
-                                width: 320,
-                                height: 320,
-                                child: CircularProgressIndicator(
-                                  value: _progress,
-                                  strokeWidth: 6,
-                                  color: color.withValues(alpha: 0.35),
-                                  backgroundColor: Colors.transparent,
+                            const Spacer(),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 48),
+                              child: Text(
+                                _instruction,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  height: 1.4,
+                                  fontSize: 21,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              AnimatedBuilder(
-                                animation: _sizeAnimation,
-                                builder: (context, child) => Container(
-                                  width: 260 * _sizeAnimation.value,
-                                  height: 260 * _sizeAnimation.value,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: color.withValues(alpha: 0.18),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: color.withValues(alpha: 0.22),
-                                        blurRadius: 80,
-                                        spreadRadius: 5,
+                            ),
+                            const Spacer(),
+                            if (_phase == BreathPhase.ready)
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(32, 0, 32, 40),
+                                child: FilledButton.icon(
+                                  onPressed: _start,
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: AppColors.danger,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 40,
+                                      vertical: 22,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppTokens.radiusPill,
                                       ),
-                                    ],
+                                    ),
+                                    elevation: 8,
+                                    shadowColor: AppColors.danger.withValues(
+                                      alpha: 0.5,
+                                    ),
                                   ),
-                                  child: Center(
-                                    child: Text(
-                                      _phase == BreathPhase.ready
-                                          ? 'READY'
-                                          : _phase.name.toUpperCase(),
-                                      style: TextStyle(
-                                        color: color,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 4,
-                                        fontSize: 20,
-                                      ),
+                                  icon: const Icon(Icons.spa_rounded, size: 20),
+                                  label: const Text(
+                                    'I Need Support Now',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            else
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 40),
+                                child: TextButton(
+                                  onPressed: _stop,
+                                  child: const Text(
+                                    'Stop breathing',
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
-                          const Spacer(),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 48),
-                            child: Text(
-                              _instruction,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
-                                height: 1.4,
-                                fontSize: 21,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const Spacer(),
-                          if (_phase == BreathPhase.ready)
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(32, 0, 32, 40),
-                              child: FilledButton.icon(
-                                onPressed: _start,
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: AppColors.danger,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 40,
-                                    vertical: 22,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppTokens.radiusPill,
-                                    ),
-                                  ),
-                                  elevation: 8,
-                                  shadowColor: AppColors.danger.withValues(
-                                    alpha: 0.5,
-                                  ),
-                                ),
-                                icon: const Icon(Icons.spa_rounded, size: 20),
-                                label: const Text(
-                                  'I Need Support Now',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
-                            )
-                          else
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 40),
-                              child: TextButton(
-                                onPressed: _stop,
-                                child: Text(
-                                  'Stop breathing',
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),

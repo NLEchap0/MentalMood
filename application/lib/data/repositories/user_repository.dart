@@ -6,6 +6,7 @@ abstract class UserRepository {
 
   Future<AppUser> createUser({
     required String username,
+    String? email,
     required String name,
     required String surname,
     required String password,
@@ -17,6 +18,7 @@ abstract class UserRepository {
     required String name,
     required String surname,
     required DateTime birthDate,
+    String? email,
   });
 
   Future<int> deleteUser(int userId);

@@ -68,6 +68,7 @@ class Badge {
 class AppUser {
   final int id;
   final String username;
+  final String? email;
   final String name;
   final String surname;
   final DateTime birthDate;
@@ -76,6 +77,7 @@ class AppUser {
   const AppUser({
     required this.id,
     required this.username,
+    this.email,
     required this.name,
     required this.surname,
     required this.birthDate,
@@ -84,10 +86,16 @@ class AppUser {
 
   String get fullName => '$name $surname';
 
-  AppUser copyWith({String? name, String? surname, DateTime? birthDate}) {
+  AppUser copyWith({
+    String? name,
+    String? surname,
+    DateTime? birthDate,
+    String? email,
+  }) {
     return AppUser(
       id: id,
       username: username,
+      email: email ?? this.email,
       name: name ?? this.name,
       surname: surname ?? this.surname,
       birthDate: birthDate ?? this.birthDate,
